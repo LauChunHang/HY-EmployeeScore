@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入評核系統</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2>登入評核系統</h2>
+    <input type="text" id="loginName" placeholder="請輸入評核人姓名" onkeypress="handleEnterKey(event)">
+    <button onclick="login()">登入</button>
+    <div id="loginError" class="error"></div>
+  </div>
+
+  <script>
+    const SPREADSHEET_ID = '1znQ2MapAc4fqXJc3SDxoixbrd-b6Xry4auf8vFIcqDc';
+    const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0';
+    const EVALUATORS_SHEET = '評核人名單';
+
+    let evaluatorList = [];
+
+    // 從Google Sheets直接讀取評核人名單
+    async function loadEvaluators() {
+      try {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(EVALUATORS_SHEET)}?key=${API_KEY}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.values && data.values.length > 1) {
+          // 第一行是標題，從第二行開始是數據
+          evaluatorList = data.values.slice(1).map(row => row[0]); // 假設姓名在第一列
+          console.log("載入評核人名單成功:", evaluatorList);
+        } else {
+          document.getElementById('loginError').textContent = '名單為空或格式錯誤';
+        }
+      } catch (error) {
+        console.error('載入評核人名單失敗:', error);
+        document.getElementById('loginError').textContent = '無法載入評核人名單';
+      }
+    }
+
+    // 處理Enter鍵
+    function handleEnterKey(event) {
+      if (event.key === 'Enter') {
+        login();
+      }
+    }
+
+    function login() {
+      const name = document.getElementById('loginName').value.trim();
+      const errorDiv = document.getElementById('loginError');
+      
+      if (!name) {
+        errorDiv.textContent = '請輸入姓名';
+        return;
+      }
+      
+      if (evaluatorList.length === 0) {
+        errorDiv.textContent = '名單尚未載入，請稍後再試';
+        return;
+      }
+      
+      // 檢查姓名是否存在（不區分大小寫）
+      const isValid = evaluatorList.some(evaluator => 
+        evaluator.toLowerCase() === name.toLowerCase()
+      );
+      
+      if (!isValid) {
+        errorDiv.textContent = '姓名不存在，無法登入';
+        return;
+      }
+      
+      // 存到 localStorage（儲存原始姓名）
+      const actualName = evaluatorList.find(evaluator => 
+        evaluator.toLowerCase() === name.toLowerCase()
+      );
+      
+      localStorage.setItem("currentEvaluator", actualName);
+      // 跳轉到主頁
+      window.location.href = "index.html";
+    }
+
+    // 頁面載入時讀取名單
+    document.addEventListener('DOMContentLoaded', loadEvaluators);
+  </script>
+</body>
+</html>

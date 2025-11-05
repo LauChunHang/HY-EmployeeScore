@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>員工評分系統</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', 'Arial', sans-serif; /* 考慮中文字體 */
+            background-color: #eef1f5; /* 輕微的背景色 */
+            padding: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 更柔和的陰影 */
+        }
+
+        h1 {
+            text-align: center;
+            color: #004d99; /* 企業藍色 */
+            margin-bottom: 30px;
+            font-size: 28px;
+            border-bottom: 3px solid #004d99;
+            padding-bottom: 10px;
+        }
+
+        /* --- 評核人資訊與登出按鈕 --- */
+        .evaluator-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border: 1px solid #cceeff;
+            font-weight: bold;
+            color: #004d99;
+        }
+        
+        .logout-button {
+            padding: 8px 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: normal;
+        }
+        
+        .logout-button:hover {
+            background: #e55a5a;
+        }
+
+
+        /* --- 搜尋欄 --- */
+        .search-box {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #c0c0c0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: #004d99;
+            box-shadow: 0 0 5px rgba(0, 77, 153, 0.3);
+            outline: none;
+        }
+
+        /* --- 員工列表網格 --- */
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .employee-card {
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid #004d99; /* 突出標識 */
+            border-radius: 8px;
+            padding: 20px;
+            background: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+            border-left-color: #007bff;
+        }
+
+        .employee-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #e0e0e0;
+            padding-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .employee-info p {
+            margin: 8px 0;
+            color: #555;
+            font-size: 15px;
+        }
+        
+        .employee-info strong {
+            color: #004d99;
+        }
+
+        /* --- 詳情頁面 --- */
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 25px;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: #5a6268;
+        }
+
+        .detail-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .detail-section h3 {
+            color: #004d99;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #004d99;
+            font-size: 22px;
+        }
+
+        .detail-item, .education-record, .experience-record, .employment-record {
+            background: white;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 6px;
+            border-left: 4px solid;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-item { border-left-color: #28a745; } /* 基本資料：綠色 */
+        .education-record { border-left-color: #fd7e14; } /* 學歷：橙色 */
+        .experience-record { border-left-color: #17a2b8; } /* 經驗：青色 */
+        .employment-record { border-left-color: #6f42c1; } /* 受僱記錄：紫色 */
+
+        .detail-item p, .education-record p, .experience-record p, .employment-record p {
+            margin: 5px 0;
+            color: #444;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+        }
+
+        /* --- 評分表單樣式 --- */
+        .evaluation-form, .interview-form {
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+            background: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .evaluation-form { border: 3px solid #004d99; }
+        .interview-form { border: 3px solid #ff6b35; } /* 會面評分用不同的顏色 */
+
+        .evaluation-form h3, .interview-form h3 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 24px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+        
+        .evaluation-form h3 { border-bottom-color: #004d99; }
+        .interview-form h3 { border-bottom-color: #ff6b35; }
+        
+        .evaluator-display {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #555;
+            padding: 5px 0;
+        }
+
+        .rating-item {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #004d99;
+        }
+        
+        .interview-form .rating-item {
+             border-left-color: #ff6b35;
+        }
+
+        .rating-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .rating-title {
+            font-weight: bold;
+            color: #004d99;
+            font-size: 18px;
+        }
+        
+        .interview-form .rating-title {
+             color: #ff6b35;
+        }
+
+        .rating-range {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .rating-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .rating-value-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745; /* 評分顯示綠色 */
+            margin: 10px 0;
+            padding: 5px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+
+        .score-breakdown {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .score-item span:first-child {
+            color: #555;
+        }
+        
+        .score-item span:last-child {
+            color: #004d99;
+            font-weight: bold;
+        }
+
+        .total-score {
+            background: #28a745;
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0 0;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.5);
+        }
+
+        .submit-button {
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s, transform 0.1s;
+        }
+        
+        /* 不同的提交按鈕顏色 */
+        .evaluation-form .submit-button { background: #004d99; }
+        .evaluation-form .submit-button:hover { background: #003a73; }
+        .interview-form .submit-button { background: #ff6b35; }
+        .interview-form .submit-button:hover { background: #e55e2e; }
+
+
+        .submit-button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+
+        /* --- 提示訊息 (Toast) --- */
+        .alert-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s ease-out;
+            min-width: 250px;
+            text-align: center;
+        }
+
+        .alert-success { background: #28a745; border-left: 5px solid #1e7e34; }
+        .alert-error { background: #dc3545; border-left: 5px solid #c82333; }
+        .alert-warning { background: #ffc107; color: #333; border-left: 5px solid #d39e00; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .fade-out { animation: slideOut 0.5s ease-in forwards; }
+
+        /* --- 響應式設計 --- */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .employee-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .detail-section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👨‍💼員工評分系統</h1>
+        <div class="evaluator-info">
+            <span>當前評核人：<span id="currentEvaluatorDisplay"></span></span>
+            <button onclick="logout()" class="logout-button">登出</button>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 搜尋員工姓名或編號..." oninput="filterEmployees()">
+        </div>
+        
+        <div id="employeeList">
+            <div class="employee-grid" id="employeeGrid">
+                <div class="loading">載入員工資料中...</div>
+            </div>
+        </div>
+        
+        <div id="employeeDetail" style="display: none;">
+            <button class="back-button" onclick="showEmployeeList()">← 返回員工列表</button>
+            <div id="basicContent"></div>
+        </div>
+
+        <div id="historyDetail" style="display: none;">
+            <button class="" onclick="showHistoryList()">歷史評分記錄</button>
+            <div id=""></div>
+        </div>
+    </div>
+
+    <script>
+    const SPREADSHEET_ID = '1znQ2MapAc4fqXJc3SDxoixbrd-b6Xry4auf8vFIcqDc';
+    const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
+    const SHEETS = {
+        BASIC: '員工資料',
+        EDUCATION: '學歷／專業資格',
+        EXPERIENCE: '工作經驗',
+        EMPLOYMENT: '康業受僱記錄',
+        RATING_RECORD: '考察團評分紀錄',
+        INTERVIEW_RECORD: '會面評分紀錄',
+        RATING: '考察團評分選項',
+        INTERVIEW_RATING: '會面評分選項',
+        EVALUATORS: '評核人名單'
+    };
+
+    let evaluatorList = [];
+    let currentEvaluator = null;
+    let allEmployees = [];
+    let educationData = [];
+    let experienceData = [];
+    let employmentData = [];
+    let ratingOptions = [];
+    let interviewRatingOptions = []; 
+    let currentEmployee = null;
+
+    // 頁面載入時檢查登入狀態
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedEvaluator = localStorage.getItem("currentEvaluator");
+        
+        if (!savedEvaluator) {
+            // 如果未登入，跳轉回登入頁
+            window.location.href = "login.html";
+            return;
+        }
+        
+        // 設置當前評核人
+        currentEvaluator = savedEvaluator;
+        document.getElementById("currentEvaluatorDisplay").textContent = currentEvaluator;
+        
+        // 載入系統資料
+        loadAllData();
+    });
+
+    // 從 Google Sheet 加載資料
+    async function loadSheetData(sheetName) {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${API_KEY}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!data.values) return [];
+            const headers = data.values[0];
+            const rows = data.values.slice(1);
+            return rows.map(row => {
+                const obj = {};
+                headers.forEach((header, index) => obj[header] = row[index] || '');
+                return obj;
+            });
+        } catch (error) {
+            console.error(`加載 ${sheetName} 失敗:`, error);
+            return [];
+        }
+    }
+
+    // 加載所有資料
+    async function loadAllData() {
+        showLoading();
+        const [basic, education, experience, employment, ratings, interviewRatings, evaluators] = await Promise.all([
+            loadSheetData(SHEETS.BASIC),
+            loadSheetData(SHEETS.EDUCATION),
+            loadSheetData(SHEETS.EXPERIENCE),
+            loadSheetData(SHEETS.EMPLOYMENT),
+            loadSheetData(SHEETS.RATING),
+            loadSheetData(SHEETS.INTERVIEW_RATING),
+            loadSheetData(SHEETS.EVALUATORS)
+        ]);
+
+        allEmployees = basic;
+        educationData = education;
+        experienceData = experience;
+        employmentData = employment;
+        evaluatorList = evaluators.map(e => e.評核人姓名 || e.評核人);
+
+        // 考察團評分選項
+        ratingOptions = ratings.map(row => ({
+            '評分項目': row['評分項目'] || '未命名',
+            '最低分': parseInt(row['最低分']) || 1,
+            '最高分': parseInt(row['最高分']) || 5
+        }));
+
+        // 會面評分選項
+        interviewRatingOptions = interviewRatings.map(row => ({
+            '評分項目': row['評分項目'] || '未命名',
+            '最低分': parseInt(row['最低分']) || 1,
+            '最高分': parseInt(row['最高分']) || 5
+        }));
+
+        displayEmployees(allEmployees);
+        hideLoading();
+    }
+
+    // 顯示員工列表
+    function displayEmployees(employees) {
+        const grid = document.getElementById('employeeGrid');
+        if (employees.length === 0) {
+            grid.innerHTML = '<div class="error">找不到員工資料</div>';
+            return;
+        }
+        grid.innerHTML = employees.map(emp => `
+            <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
+                <h3>${emp.員工姓名 || '無姓名'} (${emp.員工編號 || '無編號'})</h3>
+                <div class="employee-info">
+                    <p><strong>部門：</strong>${emp.部門 || '未填寫'}</p>
+                    <p><strong>職位：</strong>${emp.職位 || '未填寫'}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 顯示員工詳細資料
+    function showEmployeeDetail(employeeId) {
+        currentEmployee = allEmployees.find(emp => emp.員工編號 === employeeId);
+        if (!currentEmployee) return;
+
+        document.getElementById('employeeList').style.display = 'none';
+        document.getElementById('employeeDetail').style.display = 'block';
+        displayAllInfo();
+
+        loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
+
+        updateTotalScore(ratingOptions, 'rating');
+        updateTotalScore(interviewRatingOptions, 'interview');
+    }
+
+    // 顯示所有資料
+    function displayAllInfo() {
+        const content = document.getElementById('basicContent');
+        const employee = currentEmployee;
+
+        const educationRecords = educationData.filter(edu => edu.員工編號 === employee.員工編號);
+        const experienceRecords = experienceData.filter(exp => exp.員工編號 === employee.員工編號);
+        const employmentRecords = employmentData.filter(emp => emp.員工編號 === employee.員工編號);
+
+        content.innerHTML = `
+            <div class="detail-section">
+                <h3>👤 基本資料 - ${employee.員工姓名}</h3>
+                <div class="detail-item">
+                    <p><strong>員工編號：</strong>${employee.員工編號 || '未填寫'}</p>
+                    <p><strong>年齡：</strong>${employee.年齡 || '未填寫'}</p>
+                    <p><strong>婚姻狀況：</strong>${employee.婚姻狀況 || '未填寫'}</p>
+                    <p><strong>子女數目：</strong>${employee.子女數目 || '0'}</p>
+                    <p><strong>職位：</strong>${employee.職位 || '未填寫'}</p>
+                    <p><strong>部門/分區：</strong>${employee.部門 || '未填寫'}</p>
+                    <p><strong>到職日期：</strong>${employee.到職日期 || '未填寫'}</p>
+                    <p><strong>績效評估等級2023：</strong>${employee.績效評估等級2023 || '未填寫'}</p>
+                    <p><strong>績效評估等級2024：</strong>${employee.績效評估等級2024 || '未填寫'}</p>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>🎓 學歷／專業資格</h3>
+                ${educationRecords.length > 0 ? educationRecords.map(record => `
+                    <div class="education-record">
+                        <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
+                        <p><strong>學院名稱：</strong>${record.學院名稱 || ''}</p>
+                        <p><strong>所獲證書/資格：</strong>${record.所獲證書資格 || ''}</p>
+                    </div>
+                `).join('') : '<div class="no-data">沒有學歷資格記錄</div>'}
+            </div>
+
+            <div class="detail-section">
+                <h3>🏢 工作經驗</h3>
+                ${experienceRecords.length > 0 ? experienceRecords.map(record => `
+                    <div class="experience-record">
+                        <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
+                        <p><strong>公司名稱：</strong>${record.公司名稱 || ''}</p>
+                        <p><strong>離職時職位：</strong>${record.離職時職位 || ''}</p>
+                        <p><strong>入職前總年資：</strong>${record.入職前總年資 || ''}</p>
+                    </div>
+                `).join('') : '<div class="no-data">沒有工作經驗記錄</div>'}
+            </div>
+
+            <div class="detail-section">
+                <h3>📋 康業受僱記錄</h3>
+                ${employmentRecords.length > 0 ? employmentRecords.map(record => `
+                    <div class="employment-record">
+                        <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
+                        <p><strong>分區：</strong>${record.分區 || ''}</p>
+                        <p><strong>大廈：</strong>${record.大廈 || ''}</p>
+                        <p><strong>職位：</strong>${record.職位 || ''}</p>
+                        <p><strong>年資：</strong>${record.年資 || ''}</p>
+                    </div>
+                `).join('') : '<div class="no-data">沒有受僱記錄</div>'}
+            </div>
+
+            <div class="detail-section" id="historyRatingsSection">
+                <h3>🕰️ 歷史評分記錄 </h3>
+                <div id="historyRatingsContainer">
+                    <div class="no-data">正在載入歷史評分...</div>
+                </div>
+            </div>
+
+            <!-- 考察團評分表單 -->
+            <div class="evaluation-form">
+                <h3>📝 考察團整體評分</h3>
+                <div class="evaluator-display">評核人：${currentEvaluator}</div>
+                <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
+                <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
+                <div class="total-score" id="ratingTotalScore">總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
+                <button class="submit-button" onclick="submitEvaluation('考察團整體評分', ratingOptions, 'rating')">提交考察團評分</button>
+            </div>
+
+            <!-- 會面評分表單 -->
+            <div class="interview-form">
+                <h3>📝 會面評分</h3>
+                <div class="evaluator-display">評核人：${currentEvaluator}</div>
+                <div id="interviewRatingItemsContainer">${generateRatingItems(interviewRatingOptions, 'interview')}</div>
+                <div class="score-breakdown" id="interviewScoreBreakdown">${generateScoreBreakdown(interviewRatingOptions, 'interview')}</div>
+                <div class="total-score" id="interviewTotalScore">總分: 0 / ${calculateMaxScore(interviewRatingOptions)}</div>
+                <button class="submit-button" onclick="submitEvaluation('會面評分', interviewRatingOptions, 'interview')">提交會面評分</button>
+            </div>
+        `;
+
+        // 綁定評分滑桿事件
+        setupRatingSliders(ratingOptions, 'rating');
+        setupRatingSliders(interviewRatingOptions, 'interview');
+    }
+
+    // 生成評分滑桿
+    function generateRatingItems(options, prefix) {
+        return options.map((option, index) => `
+            <div class="rating-item">
+                <div class="rating-header"><span class="rating-title">${option.評分項目}</span></div>
+                <div class="rating-range">評分範圍: ${option.最低分} - ${option.最高分}分</div>
+                <input type="range" class="rating-slider" id="${prefix}-rating-${index}" min="${option.最低分}" max="${option.最高分}" value="3" step="1">
+                <div class="rating-value-display" id="${prefix}-value-${index}">3</div>
+            </div>
+        `).join('');
+    }
+
+    // 生成分數明細
+    function generateScoreBreakdown(options, prefix) {
+        return options.map((option, index) => `
+            <div class="score-item" id="${prefix}-breakdown-${index}">
+                <span>${option.評分項目}:</span>
+                <span>0 分</span>
+            </div>
+        `).join('');
+    }
+
+    // 計算最大可能分數
+    function calculateMaxScore(options) {
+        return options.reduce((total, option) => total + option.最高分, 0);
+    }
+
+    // 設置評分滑桿事件
+    function setupRatingSliders(options, prefix) {
+        options.forEach((option, index) => {
+            const slider = document.getElementById(`${prefix}-rating-${index}`);
+            const valueDisplay = document.getElementById(`${prefix}-value-${index}`);
+            if (slider && valueDisplay) {
+                slider.addEventListener('input', () => {
+                    valueDisplay.textContent = slider.value;
+                    updateTotalScore(options, prefix);
+                });
+            }
+        });
+    }
+
+    // 更新總分
+    function updateTotalScore(options, prefix) {
+        let totalScore = 0;
+        options.forEach((option, index) => {
+            const slider = document.getElementById(`${prefix}-rating-${index}`);
+            const breakdown = document.getElementById(`${prefix}-breakdown-${index}`);
+            if (slider && breakdown) {
+                const score = parseInt(slider.value);
+                totalScore += score;
+                breakdown.innerHTML = `<span>${option.評分項目}:</span><span>${score} 分</span>`;
+            }
+        });
+        document.getElementById(`${prefix}TotalScore`).textContent = `總分: ${totalScore} / ${calculateMaxScore(options)}`;
+    }
+
+    // 提交評分（修正版本）
+    async function submitEvaluation(sheetName, options, prefix) {
+        if (!currentEvaluator) {
+            alert('請先登入');
+            window.location.href = "login.html";
+            return;
+        }
+
+        if (!currentEmployee) {
+            alert('請先選擇員工');
+            return;
+        }
+
+        const evaluationData = {
+            '員工編號': currentEmployee.員工編號,
+            '員工姓名': currentEmployee.員工姓名,
+            '評核人': currentEvaluator,
+            '評分日期': new Date().toLocaleDateString('zh-TW'),
+            '總分': 0
+        };
+
+        let totalScore = 0;
+        options.forEach((option, index) => {
+            const slider = document.getElementById(`${prefix}-rating-${index}`);
+            if (slider) {
+                const score = parseInt(slider.value);
+                evaluationData[option.評分項目] = score;
+                totalScore += score;
+            }
+        });
+        evaluationData['總分'] = totalScore;
+
+        console.log('提交評分數據:', evaluationData);
+
+        try {
+            const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
+            const button = buttons[0];
+            
+            button.disabled = true;
+            button.textContent = '提交中...';
+
+            const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
+            
+            await fetch(scriptURL, {
+                method: "POST",
+                
+                headers: { 
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "saveEvaluation",
+                    sheetName: sheetName,
+                    data: evaluationData
+                })
+            });
+
+            // 顯示成功訊息
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success';
+            alert(`${sheetName}已成功提交！`);
+            button.parentElement.prepend(successMsg);
+
+            setTimeout(() => {
+                successMsg.remove();
+                button.disabled = false;
+                button.textContent = `提交${sheetName}`;
+            }, 2000);
+
+        } catch (error) {
+            console.error("提交評分失敗:", error);
+            alert("提交評分失敗，請稍後再試");
+            
+            const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
+            const button = buttons[0];
+            button.disabled = false;
+            button.textContent = `提交${sheetName}`;
+        }
+    }
+
+    async function loadHistoryRatings(employeeId, evaluator) {
+        const container = document.getElementById('historyRatingsContainer');
+        container.innerHTML = '<div class="no-data">正在載入歷史評分...</div>';
+
+        try {
+            // 使用 GET 請求，Action=getRatings
+            const url = `${scriptURL}?action=getRatings&employeeId=${employeeId}&evaluator=${evaluator}`;
+            
+            const response = await fetch(url);
+            const result = await response.json(); 
+
+            if (!result.success) {
+                container.innerHTML = `<div class="no-data" style="color: #c0392b;">載入歷史失敗: ${result.message}</div>`;
+                return;
+            }
+
+            const allHistory = result.data;
+            
+            if (!allHistory || (allHistory.tour.length === 0 && allHistory.interview.length === 0)) {
+                container.innerHTML = '<div class="no-data">無相關歷史評分記錄。</div>';
+                return;
+            }
+
+            // 顯示歷史數據
+            container.innerHTML = `
+                ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99')}
+                ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#ff6b35')}
+            `;
+            
+        } catch (error) {
+            console.error("載入歷史評分失敗:", error);
+            container.innerHTML = `<div class="no-data" style="color: #e74c3c;">網絡或腳本錯誤，無法載入歷史記錄。</div>`;
+        }
+    }
+
+    // 渲染歷史記錄的輔助函數
+    function renderHistorySection(records, title, color) {
+        if (records.length === 0) {
+            return ''; // 如果沒有記錄則不顯示區塊
+        }
+        
+        // 獲取最新一條記錄 (假設 App Script 已經排序或最後一條就是最新)
+        const latestRecord = records[records.length - 1]; 
+        
+        let detailHtml = Object.keys(latestRecord).map(key => {
+            // 排除基礎欄位，只顯示評分細節
+            if (!['員工編號', '員工姓名', '評核人', '總分', '評分日期'].includes(key) && latestRecord[key] !== undefined && latestRecord[key] !== '') {
+                return `<p style="margin-left: 10px; font-size: 14px;">${key}: **${latestRecord[key]}** 分</p>`;
+            }
+            return '';
+        }).join('');
+
+        return `
+            <div style="border: 1px solid #ddd; border-left: 5px solid ${color}; padding: 15px; margin-top: 15px; border-radius: 5px; background: #fff;">
+                <h4 style="margin-top: 0; color: ${color}; font-size: 18px;">${title} (最新記錄)</h4>
+                <p><strong>評分日期：</strong>${latestRecord['評分日期'] || 'N/A'}</p>
+                <p><strong>總分：</strong><span style="font-size: 1.2em; font-weight: bold; color: #28a745;">${latestRecord['總分'] || 'N/A'}</span></p>
+                <details style="margin-top: 10px;">
+                    <summary style="font-weight: bold; cursor: pointer; color: #555;">點擊查看評分細節</summary>
+                    <div style="padding-top: 5px;">${detailHtml}</div>
+                </details>
+                <p style="color: #dc3545; font-weight: bold; margin-top: 10px; font-size: 14px;">
+                    *您再次提交評分，將會**覆蓋**此最新記錄。
+                </p>
+            </div>
+        `;
+    }
+
+    // 返回員工列表
+    function showEmployeeList() {
+        document.getElementById('employeeDetail').style.display = 'none';
+        document.getElementById('employeeList').style.display = 'block';
+        currentEmployee = null;
+    }
+
+    // 搜尋過濾
+    function filterEmployees() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allEmployees.filter(emp =>
+            (emp.員工姓名 && emp.員工姓名.toLowerCase().includes(searchTerm)) ||
+            (emp.員工編號 && emp.員工編號.toLowerCase().includes(searchTerm))
+        );
+        displayEmployees(filtered);
+    }
+
+    function showLoading() { 
+        document.getElementById('employeeGrid').innerHTML = '<div class="loading">載入中...</div>'; 
+    }
+    
+    function hideLoading() {}
+    
+    function showError(message) { 
+        document.getElementById('employeeGrid').innerHTML = `<div class="error">${message}</div>`; 
+    }
+
+    // 登出功能
+    function logout() {
+        localStorage.removeItem("currentEvaluator");
+        window.location.href = "login.html";
+    }
+    </script>
+</body>
+</html>
