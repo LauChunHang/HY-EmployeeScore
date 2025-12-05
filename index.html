@@ -605,10 +605,10 @@ function renderHistorySection(records, title, color, type) {
 
         console.log('提交評分數據:', evaluationData);
 
+        const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
+        const button = buttons[0];
+
         try {
-            const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
-            const button = buttons[0];
-            
             button.disabled = true;
             button.textContent = '提交中...';
 
@@ -624,36 +624,23 @@ function renderHistorySection(records, title, color, type) {
             });
 
             
-            showCustomMessage(`${sheetName}已成功提交！`, 'success');
+            showCustomMessage(`${sheetName}已成功提交！頁面將自動刷新。`, 'success');
             
-            // 1. Re-fetch history records for detail view update
-            await loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
-
-            // 2. Re-fetch all ratings for list view update
-            const updatedScores = await loadAllEvaluatorRatings(currentEvaluator);
-            employeeScores = updatedScores.reduce((acc, score) => {
-                acc[score.員工編號] = score;
-                return acc;
-            }, {});
-            
-            // 3. Re-display the employee list if currently on the list view (optional but good practice)
-            if (document.getElementById('employeeList').style.display !== 'none') {
-                displayEmployees(allEmployees);
-            }
-
+            // ************ 根據使用者要求：提交成功後，自動刷新整個頁面 ************
+            // 這將會確保所有資料（員工列表、歷史記錄）都是最新的
+            setTimeout(() => {
+                window.location.reload(); 
+            }, 1000); // 給用戶看到成功訊息的時間
 
         } catch (error) {
             console.error("提交評分失敗:", error);
             showCustomMessage("提交評分失敗，請稍後再試", 'error');
             
-        } finally {
-            
+            // 失敗時重新啟用按鈕
             setTimeout(() => {
-                const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
-                const button = buttons[0];
                 button.disabled = false;
                 button.textContent = sheetName === SHEETS.TOUR_SCORE ? '提交考察團評分' : '提交會面評分';
-            }, 2000);
+            }, 1000);
         }
     }
 
