@@ -4,438 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>員工評分系統</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
 
-        body {
-            font-family: 'Noto Sans TC', 'Arial', sans-serif; /* 考慮中文字體 */
-            background-color: #eef1f5; /* 輕微的背景色 */
-            padding: 20px;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 更柔和的陰影 */
-        }
-
-        h1 {
-            text-align: center;
-            color: #004d99; /* 企業藍色 */
-            margin-bottom: 30px;
-            font-size: 28px;
-            border-bottom: 3px solid #004d99;
-            padding-bottom: 10px;
-        }
-
-        /* --- 評核人資訊與登出按鈕 --- */
-        .evaluator-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 10px 15px;
-            background: #f0f8ff;
-            border-radius: 8px;
-            border: 1px solid #cceeff;
-            font-weight: bold;
-            color: #004d99;
-        }
-        
-        .logout-button {
-            padding: 8px 15px;
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-weight: normal;
-        }
-        
-        .logout-button:hover {
-            background: #e55a5a;
-        }
-
-
-        /* --- 搜尋欄 --- */
-        .search-box {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #c0c0c0;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .search-box input:focus {
-            border-color: #004d99;
-            box-shadow: 0 0 5px rgba(0, 77, 153, 0.3);
-            outline: none;
-        }
-
-        /* --- 員工列表網格 --- */
-        .employee-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .employee-card {
-            border: 1px solid #e0e0e0;
-            border-left: 5px solid #004d99; /* 突出標識 */
-            border-radius: 8px;
-            padding: 20px;
-            background: #ffffff;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            cursor: pointer;
-        }
-
-        .employee-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-            border-left-color: #007bff;
-        }
-
-        .employee-card h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            border-bottom: 1px dashed #e0e0e0;
-            padding-bottom: 8px;
-            font-size: 18px;
-        }
-
-        .employee-info p {
-            margin: 8px 0;
-            color: #555;
-            font-size: 15px;
-        }
-        
-        .employee-info strong {
-            color: #004d99;
-        }
-
-        /* --- 詳情頁面 --- */
-        .back-button {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 25px;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-
-        .back-button:hover {
-            background: #5a6268;
-        }
-
-        .detail-section {
-            margin-bottom: 30px;
-            padding: 25px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .detail-section h3 {
-            color: #004d99;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #004d99;
-            font-size: 22px;
-        }
-
-        .detail-item, .education-record, .experience-record, .employment-record {
-            background: white;
-            padding: 15px;
-            margin: 12px 0;
-            border-radius: 6px;
-            border-left: 4px solid;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .detail-item { border-left-color: #28a745; } /* 基本資料：綠色 */
-        .education-record { border-left-color: #fd7e14; } /* 學歷：橙色 */
-        .experience-record { border-left-color: #17a2b8; } /* 經驗：青色 */
-        .employment-record { border-left-color: #6f42c1; } /* 受僱記錄：紫色 */
-
-        .detail-item p, .education-record p, .experience-record p, .employment-record p {
-            margin: 5px 0;
-            color: #444;
-        }
-        
-        .no-data {
-            text-align: center;
-            color: #999;
-            padding: 20px;
-            font-style: italic;
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 6px;
-        }
-
-        /* --- 評分表單樣式 --- */
-        .evaluation-form, .interview-form {
-            padding: 30px;
-            border-radius: 10px;
-            margin-top: 30px;
-            background: #ffffff;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .evaluation-form { border: 3px solid #004d99; }
-        .interview-form { border: 3px solid #ff6b35; } /* 會面評分用不同的顏色 */
-
-        .evaluation-form h3, .interview-form h3 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 24px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid;
-        }
-        
-        .evaluation-form h3 { border-bottom-color: #004d99; }
-        .interview-form h3 { border-bottom-color: #ff6b35; }
-        
-        .evaluator-display {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #555;
-            padding: 5px 0;
-        }
-
-        .rating-item {
-            margin: 25px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 5px solid #004d99;
-        }
-        
-        .interview-form .rating-item {
-             border-left-color: #ff6b35;
-        }
-
-        .rating-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .rating-title {
-            font-weight: bold;
-            color: #004d99;
-            font-size: 18px;
-        }
-        
-        .interview-form .rating-title {
-             color: #ff6b35;
-        }
-
-        .rating-range {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        .rating-slider {
-            width: 100%;
-            margin: 10px 0;
-        }
-
-        .rating-value-display {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #28a745; /* 評分顯示綠色 */
-            margin: 10px 0;
-            padding: 5px;
-            border: 1px dashed #ccc;
-            border-radius: 4px;
-        }
-
-        .score-breakdown {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 1px solid #dee2e6;
-        }
-
-        .score-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            font-size: 15px;
-            font-weight: 500;
-        }
-        
-        .score-item span:first-child {
-            color: #555;
-        }
-        
-        .score-item span:last-child {
-            color: #004d99;
-            font-weight: bold;
-        }
-
-        .total-score {
-            background: #28a745;
-            color: white;
-            padding: 25px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 20px 0 0;
-            font-size: 28px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.5);
-        }
-
-        .submit-button {
-            background: #28a745;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 18px;
-            width: 100%;
-            margin-top: 20px;
-            transition: background 0.3s, transform 0.1s;
-        }
-        
-        /* 不同的提交按鈕顏色 */
-        .evaluation-form .submit-button { background: #004d99; }
-        .evaluation-form .submit-button:hover { background: #003a73; }
-        .interview-form .submit-button { background: #ff6b35; }
-        .interview-form .submit-button:hover { background: #e55e2e; }
-
-
-        .submit-button:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-        }
-
-        /* --- 提示訊息 (Toast) --- */
-        .alert-message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.5s ease-out;
-            min-width: 250px;
-            text-align: center;
-        }
-
-        .alert-success { background: #28a745; border-left: 5px solid #1e7e34; }
-        .alert-error { background: #dc3545; border-left: 5px solid #c82333; }
-        .alert-warning { background: #ffc107; color: #333; border-left: 5px solid #d39e00; }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        .fade-out { animation: slideOut 0.5s ease-in forwards; }
-
-        /* --- 響應式設計 --- */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .employee-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
-            
-            .detail-section {
-                padding: 15px;
-            }
-        }
-    </style>
+    <!-- 整合 CSS 樣式 -->
+     
+    
+ 
 </head>
 <body>
+    <div id="customMessageBox" class="custom-message-box"></div>
+    
     <div class="container">
-        <h1>👨‍💼員工評分系統</h1>
-        <div class="evaluator-info">
-            <span>當前評核人：<span id="currentEvaluatorDisplay"></span></span>
-            <button onclick="logout()" class="logout-button">登出</button>
-        </div>
         
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 搜尋員工姓名或編號..." oninput="filterEmployees()">
+        <div class="flex items-center justify-center mb-6">
+            <!-- 替換 HongYipLogo.png 為 Tailwind 樣式的佔位符 -->
+                        <img src="HongYipLogo.png" alt="logo" class="w-16 h-16 mr-4 object-contain">
+
+            <h1 class="text-3xl font-bold" style="color: #004d99;">員工評分系統</h1>
+        </div>
+        <div class="evaluator-info flex justify-between items-center mb-5 p-3 bg-white rounded-lg shadow-md border border-gray-100">
+            <span class="text-lg">當前評核人：<span id="currentEvaluatorDisplay" class="font-semibold text-[#ff6b35]"></span></span>
+            <div class="flex space-x-3">
+               
+                <button onclick="logout()" class="logout-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-150 shadow-md">登出</button>
+            </div>
         </div>
         
         <div id="employeeList">
             <div class="employee-grid" id="employeeGrid">
-                <div class="loading">載入員工資料中...</div>
+                <div class="loading ">載入員工資料中...</div>
+                
             </div>
         </div>
+
+        
         
         <div id="employeeDetail" style="display: none;">
-            <button class="back-button" onclick="showEmployeeList()">← 返回員工列表</button>
+            <button class="back-button bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg mb-5 transition duration-150 shadow-md" onclick="showEmployeeList()">← 返回員工列表</button>
             <div id="basicContent"></div>
-        </div>
-
-        <div id="historyDetail" style="display: none;">
-            <button class="" onclick="showHistoryList()">歷史評分記錄</button>
-            <div id=""></div>
         </div>
     </div>
 
     <script>
+    // google sheet config
     const SPREADSHEET_ID = '1znQ2MapAc4fqXJc3SDxoixbrd-b6Xry4auf8vFIcqDc';
     const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0'; 
     const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
+    
+    
     const SHEETS = {
         BASIC: '員工資料',
         EDUCATION: '學歷／專業資格',
         EXPERIENCE: '工作經驗',
         EMPLOYMENT: '康業受僱記錄',
-        RATING_RECORD: '考察團評分紀錄',
-        INTERVIEW_RECORD: '會面評分紀錄',
         RATING: '考察團評分選項',
         INTERVIEW_RATING: '會面評分選項',
-        EVALUATORS: '評核人名單'
+        EVALUATORS: '評核人名單',
+        TOUR_SCORE: '考察團整體評分', 
+        INTERVIEW_SCORE: '會面評分'
     };
 
     let evaluatorList = [];
@@ -447,13 +75,37 @@
     let ratingOptions = [];
     let interviewRatingOptions = []; 
     let currentEmployee = null;
+    let employeeScores = {}; // NEW: 儲存評核人對所有員工的最新評分
 
-    // 頁面載入時檢查登入狀態
+    // --- 自定義訊息和載入狀態函數 ---
+    function showCustomMessage(message, type = 'info') {
+        const msgBox = document.getElementById('customMessageBox');
+        msgBox.textContent = message;
+        msgBox.className = `custom-message-box show ${type}`;
+        
+        setTimeout(() => {
+            msgBox.classList.remove('show');
+        }, 3000);
+    }
+
+    function showLoading() { 
+        document.getElementById('employeeGrid').innerHTML = '<div class="loading text-center text-xl p-10 text-gray-500">載入中...</div>'; 
+    }
+    
+    function hideLoading() { 
+        // intentionally empty to allow the next displayEmployees call to hide it
+    }
+    
+    function showError(message) { 
+        document.getElementById('employeeGrid').innerHTML = `<div class="error text-center text-red-600 p-10 border border-red-300 bg-red-50 rounded-lg">${message}</div>`; 
+    }
+
+    // check login
     document.addEventListener('DOMContentLoaded', function() {
         const savedEvaluator = localStorage.getItem("currentEvaluator");
         
         if (!savedEvaluator) {
-            // 如果未登入，跳轉回登入頁
+            
             window.location.href = "login.html";
             return;
         }
@@ -466,8 +118,9 @@
         loadAllData();
     });
 
-    // 從 Google Sheet 加載資料
+    // upload data from google sheet
     async function loadSheetData(sheetName) {
+        // Since we are using an App Script for evaluation data, the Sheets API for basic employee data is fine.
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${API_KEY}`;
         try {
             const response = await fetch(url);
@@ -485,106 +138,194 @@
             return [];
         }
     }
+    
+    // NEW FUNCTION: 載入當前評核人對所有員工的最新評分
+    async function loadAllEvaluatorRatings(evaluator) {
+        if (!evaluator) return [];
+        const url = `${scriptURL}?action=getAllEvaluatorRatings&evaluator=${encodeURIComponent(evaluator)}`;
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+            if (result.success) {
+                console.log('所有評分載入成功:', result.data);
+                return result.data;
+            } else {
+                console.error("載入所有評分失敗:", result.message);
+                return [];
+            }
+        } catch (error) {
+            console.error("載入所有評分失敗:", error);
+            return [];
+        }
+    }
 
-    // 加載所有資料
+    // upload all data
     async function loadAllData() {
         showLoading();
-        const [basic, education, experience, employment, ratings, interviewRatings, evaluators] = await Promise.all([
+        // 使用 Promise.all 加速數據載入
+        const [basic, education, experience, employment, ratings, interviewRatings, evaluators, allRatings] = await Promise.all([
             loadSheetData(SHEETS.BASIC),
             loadSheetData(SHEETS.EDUCATION),
             loadSheetData(SHEETS.EXPERIENCE),
             loadSheetData(SHEETS.EMPLOYMENT),
             loadSheetData(SHEETS.RATING),
             loadSheetData(SHEETS.INTERVIEW_RATING),
-            loadSheetData(SHEETS.EVALUATORS)
+            loadSheetData(SHEETS.EVALUATORS),
+            loadAllEvaluatorRatings(currentEvaluator) // <-- NEW: Fetch all scores
         ]);
 
         allEmployees = basic;
         educationData = education;
         experienceData = experience;
+        experienceData = experience.map(record => ({
+            ...record,
+            // 確保「入職前總年資」字段存在，即使為空，避免模板渲染問題
+            '入職前總年資': record['入職前總年資'] || '' 
+        }));
         employmentData = employment;
         evaluatorList = evaluators.map(e => e.評核人姓名 || e.評核人);
 
         // 考察團評分選項
         ratingOptions = ratings.map(row => ({
             '評分項目': row['評分項目'] || '未命名',
-            '最低分': parseInt(row['最低分']) || 1,
+            '最低分': parseInt(row['最低分']) || 0,
             '最高分': parseInt(row['最高分']) || 5
         }));
 
         // 會面評分選項
         interviewRatingOptions = interviewRatings.map(row => ({
             '評分項目': row['評分項目'] || '未命名',
-            '最低分': parseInt(row['最低分']) || 1,
+            '最低分': parseInt(row['最低分']) || 0,
             '最高分': parseInt(row['最高分']) || 5
         }));
+
+        // 處理所有評分數據，轉為以員工編號為鍵的映射
+        employeeScores = allRatings.reduce((acc, score) => {
+            acc[score.員工編號] = score;
+            return acc;
+        }, {});
+
 
         displayEmployees(allEmployees);
         hideLoading();
     }
 
-    // 顯示員工列表
+    // employee list (UPDATED)
     function displayEmployees(employees) {
         const grid = document.getElementById('employeeGrid');
         if (employees.length === 0) {
             grid.innerHTML = '<div class="error">找不到員工資料</div>';
             return;
         }
-        grid.innerHTML = employees.map(emp => `
-            <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
-                <h3>${emp.員工姓名 || '無姓名'} (${emp.員工編號 || '無編號'})</h3>
-                <div class="employee-info">
-                    <p><strong>部門：</strong>${emp.部門 || '未填寫'}</p>
-                    <p><strong>職位：</strong>${emp.職位 || '未填寫'}</p>
+        grid.innerHTML = employees.map(emp => {
+            const scores = employeeScores[emp.員工編號] || {};
+            
+            // 檢查分數是否存在
+            const tourTotal = scores.tourTotal !== null && scores.tourTotal !== undefined ? scores.tourTotal : null;
+            const interviewTotal = scores.interviewTotal !== null && scores.interviewTotal !== undefined ? scores.interviewTotal : null;
+
+            // 格式化顯示
+            const tourScoreDisplay = tourTotal !== null 
+                ? `<span class="text-green-600 font-bold">${tourTotal} 分</span> <span class="text-xs text-gray-400">(${scores.tourDate ? scores.tourDate.substring(0, 10) : 'N/A'})</span>` 
+                : '<span class="text-red-500">未評分</span>';
+            const interviewScoreDisplay = interviewTotal !== null 
+                ? `<span class="text-blue-600 font-bold">${interviewTotal} 分</span> <span class="text-xs text-gray-400">(${scores.interviewDate ? scores.interviewDate.substring(0, 10) : 'N/A'})</span>` 
+                : '<span class="text-red-500">未評分</span>';
+
+            return `
+                <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
+                    <h3 class="text-xl font-bold text-[#004d99] mb-2">${emp.員工姓名 || '無姓名'} (${emp.員工編號 || '無編號'})</h3>
+                    <div class="employee-info text-sm text-gray-700">
+                        <p><strong>部門：</strong>${emp.部門 || '未填寫'}</p>
+                        <p><strong>職位：</strong>${emp.職位 || '未填寫'}</p>
+                    </div>
+                    <div class="rating-summary mt-3 pt-3 border-t border-gray-200">
+                        <div class="flex justify-between items-center text-sm mb-1">
+                            <span class="font-medium text-gray-500">考察團評分:</span>
+                            ${tourScoreDisplay}
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-medium text-gray-500">會面評分:</span>
+                            ${interviewScoreDisplay}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
-    // 顯示員工詳細資料
+    // employee info. (UPDATED to include Employee Photo)
     function showEmployeeDetail(employeeId) {
-        currentEmployee = allEmployees.find(emp => emp.員工編號 === employeeId);
-        if (!currentEmployee) return;
+    currentEmployee = allEmployees.find(emp => emp.員工編號 === employeeId);
+    if (!currentEmployee) return;
 
-        document.getElementById('employeeList').style.display = 'none';
-        document.getElementById('employeeDetail').style.display = 'block';
-        displayAllInfo();
+    document.getElementById('employeeList').style.display = 'none';
+    document.getElementById('employeeDetail').style.display = 'block';
+    
+    displayAllInfo(); // 呼叫更新後的顯示函式
 
-        loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
+    updateTotalScore(ratingOptions, 'rating');
+    updateTotalScore(interviewRatingOptions, 'interview');
+    
+    // 確保這裡有定義 loadHistoryRatings 函式並正確使用
+     loadHistoryRatings(employeeId, currentEvaluator); 
+}
 
-        updateTotalScore(ratingOptions, 'rating');
-        updateTotalScore(interviewRatingOptions, 'interview');
-    }
+function displayAllInfo() {
+    const content = document.getElementById('basicContent');
+    const employee = currentEmployee;
 
-    // 顯示所有資料
-    function displayAllInfo() {
-        const content = document.getElementById('basicContent');
-        const employee = currentEmployee;
+    const educationRecords = educationData.filter(edu => edu.員工編號 === employee.員工編號);
+    const experienceRecords = experienceData.filter(exp => exp.員工編號 === employee.員工編號);
+    const employmentRecords = employmentData.filter(emp => emp.員工編號 === employee.員工編號);
 
-        const educationRecords = educationData.filter(edu => edu.員工編號 === employee.員工編號);
-        const experienceRecords = experienceData.filter(exp => exp.員工編號 === employee.員工編號);
-        const employmentRecords = employmentData.filter(emp => emp.員工編號 === employee.員工編號);
+    // 檢查員工照片字段並生成 HTML
+    const employeePhotoUrl = employee.員工照片 && employee.員工照片.startsWith('http') ? employee.員工照片 : null;
+    
+    // **直長方形照片 (Vertical Rectangle - ID Photo Style) 樣式**
+    // 使用 w-32 h-48 (128px x 192px) 建立直立長方形比例
+    const photoPlaceholderUrl = `https://placehold.co/128x192/004d99/ffffff?text=${(employee.員工姓名 || '無').substring(0, 1)}%20(無照片)`;
+    
+    console.log(`員工 ${employee.員工姓名} 的照片 URL (診斷):`, employeePhotoUrl);
 
-        content.innerHTML = `
-            <div class="detail-section">
-                <h3>👤 基本資料 - ${employee.員工姓名}</h3>
-                <div class="detail-item">
-                    <p><strong>員工編號：</strong>${employee.員工編號 || '未填寫'}</p>
-                    <p><strong>年齡：</strong>${employee.年齡 || '未填寫'}</p>
-                    <p><strong>婚姻狀況：</strong>${employee.婚姻狀況 || '未填寫'}</p>
-                    <p><strong>子女數目：</strong>${employee.子女數目 || '0'}</p>
-                    <p><strong>職位：</strong>${employee.職位 || '未填寫'}</p>
-                    <p><strong>部門/分區：</strong>${employee.部門 || '未填寫'}</p>
-                    <p><strong>到職日期：</strong>${employee.到職日期 || '未填寫'}</p>
-                    <p><strong>績效評估等級2023：</strong>${employee.績效評估等級2023 || '未填寫'}</p>
-                    <p><strong>績效評估等級2024：</strong>${employee.績效評估等級2024 || '未填寫'}</p>
+    // 使用 w-32 h-48, rounded-lg (直長方形)，並添加 shadow-xl 增加立體感
+    const employeePhotoHtml = employeePhotoUrl 
+        ? `<img src="${employeePhotoUrl}" alt="${employee.員工姓名} - 員工照片" class="w-32 h-48 object-cover rounded-lg shadow-xl mb-4 bg-gray-200" onerror="this.onerror=null; this.src='${photoPlaceholderUrl}';">` 
+        : `<div class="w-32 h-48 flex items-center justify-center bg-gray-200 rounded-lg text-gray-500 shadow-xl text-3xl font-semibold mb-4">${(employee.員工姓名 || '無').substring(0, 2)}</div>`;
+
+
+    content.innerHTML = `
+        <div class="detail-section">
+            <h3>👤 基本資料 - ${employee.員工姓名}</h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- 員工照片欄位 (左側) - 增加 flex flex-col items-center 讓固定尺寸的直長方形照片居中 -->
+                <div class="lg:col-span-1 flex flex-col items-center">
+                    ${employeePhotoHtml}
+                    
+                </div>
+                <!-- 基本資料 (右側) -->
+                <div class="lg:col-span-2">
+                    <div class="detail-item grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <p><strong>員工編號：</strong>${employee.員工編號 || '未填寫'}</p>
+                        <p><strong>年齡：</strong>${employee.年齡 || '未填寫'}</p>
+                        <p><strong>婚姻狀況：</strong>${employee.婚姻狀況 || '未填寫'}</p>
+                        <p><strong>子女數目：</strong>${employee.子女數目 || '0'}</p>
+                        <p><strong>職位：</strong>${employee.職位 || '未填寫'}</p>
+                        <p><strong>地域：</strong>${employee.地域 || '未填寫'}</p>
+                        <p><strong>部門/分區：</strong>${employee.部門 || '未填寫'}</p>
+                        <p><strong>到職日期：</strong>${employee.到職日期 || '未填寫'}</p>
+                        <p><strong>績效評估等級2023：</strong>${employee.績效評估等級2023 || '未填寫'}</p>
+                        <p><strong>績效評估等級2024：</strong>${employee.績效評估等級2024 || '未填寫'}</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
             <div class="detail-section">
                 <h3>🎓 學歷／專業資格</h3>
                 ${educationRecords.length > 0 ? educationRecords.map(record => `
-                    <div class="education-record">
+                    <div class="education-record border-b pb-2 mb-2">
                         <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
                         <p><strong>學院名稱：</strong>${record.學院名稱 || ''}</p>
                         <p><strong>所獲證書/資格：</strong>${record.所獲證書資格 || ''}</p>
@@ -595,7 +336,7 @@
             <div class="detail-section">
                 <h3>🏢 工作經驗</h3>
                 ${experienceRecords.length > 0 ? experienceRecords.map(record => `
-                    <div class="experience-record">
+                    <div class="experience-record border-b pb-2 mb-2">
                         <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
                         <p><strong>公司名稱：</strong>${record.公司名稱 || ''}</p>
                         <p><strong>離職時職位：</strong>${record.離職時職位 || ''}</p>
@@ -607,7 +348,7 @@
             <div class="detail-section">
                 <h3>📋 康業受僱記錄</h3>
                 ${employmentRecords.length > 0 ? employmentRecords.map(record => `
-                    <div class="employment-record">
+                    <div class="employment-record border-b pb-2 mb-2">
                         <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
                         <p><strong>分區：</strong>${record.分區 || ''}</p>
                         <p><strong>大廈：</strong>${record.大廈 || ''}</p>
@@ -617,13 +358,12 @@
                 `).join('') : '<div class="no-data">沒有受僱記錄</div>'}
             </div>
 
-            <div class="detail-section" id="historyRatingsSection">
-                <h3>🕰️ 歷史評分記錄 </h3>
-                <div id="historyRatingsContainer">
-                    <div class="no-data">正在載入歷史評分...</div>
-                </div>
+            <!-- 歷史評分記錄區塊 -->
+            <div class="detail-section mt-8">
+                <h3>📜 你的評分記錄 (${currentEvaluator} 的評分)</h3>
+                <div id="historyRatingsContainer">正在載入您的歷史記錄...</div>
             </div>
-
+            
             <!-- 考察團評分表單 -->
             <div class="evaluation-form">
                 <h3>📝 考察團整體評分</h3>
@@ -631,7 +371,7 @@
                 <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
                 <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
                 <div class="total-score" id="ratingTotalScore">總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
-                <button class="submit-button" onclick="submitEvaluation('考察團整體評分', ratingOptions, 'rating')">提交考察團評分</button>
+                <button class="submit-button" onclick="submitEvaluation('${SHEETS.TOUR_SCORE}', ratingOptions, 'rating')">提交考察團評分</button>
             </div>
 
             <!-- 會面評分表單 -->
@@ -641,8 +381,10 @@
                 <div id="interviewRatingItemsContainer">${generateRatingItems(interviewRatingOptions, 'interview')}</div>
                 <div class="score-breakdown" id="interviewScoreBreakdown">${generateScoreBreakdown(interviewRatingOptions, 'interview')}</div>
                 <div class="total-score" id="interviewTotalScore">總分: 0 / ${calculateMaxScore(interviewRatingOptions)}</div>
-                <button class="submit-button" onclick="submitEvaluation('會面評分', interviewRatingOptions, 'interview')">提交會面評分</button>
+                <button class="submit-button" onclick="submitEvaluation('${SHEETS.INTERVIEW_SCORE}', interviewRatingOptions, 'interview')">提交會面評分</button>
             </div>
+            
+            
         `;
 
         // 綁定評分滑桿事件
@@ -650,14 +392,137 @@
         setupRatingSliders(interviewRatingOptions, 'interview');
     }
 
+    
+    // history
+async function loadHistoryRatings(employeeId, evaluator) {
+    const container = document.getElementById('historyRatingsContainer');
+    if (!container) {
+        console.error('找不到歷史記錄容器');
+        return;
+    }
+    
+    container.innerHTML = '<div class="no-data text-center p-5 text-blue-500">正在載入歷史評分...</div>';
+
+    try {
+        const url = `${scriptURL}?action=getRatings&employeeId=${encodeURIComponent(employeeId)}&evaluator=${encodeURIComponent(evaluator)}`;
+        
+        console.log(url);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
+        }
+        
+        const result = await response.json(); 
+
+        if (!result.success) {
+            container.innerHTML = `<div class="no-data text-center p-5 border border-yellow-400 bg-yellow-50">載入歷史失敗: ${result.message}</div>`;
+            return;
+        }
+
+        const allHistory = result.data;
+        
+        if (!allHistory || (allHistory.tour.length === 0 && allHistory.interview.length === 0)) {
+            container.innerHTML = '<div class="no-data text-center p-5 bg-gray-50 rounded-lg">無相關歷史評分記錄。</div>';
+            return;
+        }
+
+        
+        container.innerHTML = `
+            ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99', 'tour')}
+            ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#004d99', 'interview')}
+        `;
+        
+    } catch (error) {
+        console.error("載入歷史評分失敗:", error);
+        container.innerHTML = `
+            <div class="no-data text-center p-5 border border-red-400 bg-red-100 text-red-700 rounded-lg">
+                無法載入歷史記錄<br>
+                <small>錯誤: ${error.message}</small>
+                <br><br>
+                <button onclick="loadHistoryRatings('${employeeId}', '${evaluator}')" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2">
+                    重新載入
+                </button>
+            </div>
+        `;
+    }
+}
+
+function renderHistorySection(records, title, color, type) {
+    if (records.length === 0) {
+        return `
+            <div class="mb-6 p-4 border-l-4" style="border-left-color: ${color};">
+                <h4 class="text-lg font-bold mb-2" style="color: ${color};">${title}</h4>
+                <div class="no-data text-center p-4 bg-gray-50 rounded">無${title}</div>
+            </div>
+        `;
+    }
+    
+    const sortedRecords = records.sort((a, b) => {
+        const dateA = new Date(a.評分日期 || '2000-01-01');
+        const dateB = new Date(b.評分日期 || '2000-01-01');
+        return dateB - dateA; // 最新日期在前
+    });
+    
+    return `
+        <div class="mb-6 p-4 border-l-4" style="border-left-color: ${color};">
+            <h4 class="text-lg font-bold mb-4" style="color: ${color};">${title} (${records.length} 條記錄)</h4>
+            ${sortedRecords.map((record, index) => {
+                const isLatest = index === 0;
+                let detailHtml = Object.keys(record).map(key => {
+                    // 排除核心欄位，只顯示評分項目
+                    if (!['員工編號', '員工姓名', '評核人', '總分', '評分日期'].includes(key) && 
+                        record[key] !== undefined && record[key] !== '' && record[key] != null) {
+                        return `<p class="ml-4 text-sm"><span class="font-medium">${key}:</span> <strong>${record[key]}</strong> 分</p>`;
+                    }
+                    return '';
+                }).filter(html => html !== '').join('');
+
+                return `
+                    <div class="history-record mb-4 p-4 border rounded-lg ${isLatest ? 'border-green-500 bg-green-50' : 'border-gray-200'}">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <p class="text-xl font-bold" style="color: ${color};">
+                                    總分: <span class="text-green-600 text-2xl">${record['總分'] || 'N/A'}</span>
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    <strong>評分日期：</strong>${record['評分日期'] ? new Date(record['評分日期']).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'N/A'}
+                                </p>
+                            </div>
+                            
+                        </div>
+                        
+                        ${detailHtml ? `
+                        
+                            
+                            <div class="pt-2">
+                                ${detailHtml}
+                            </div>
+                        
+                        ` : ''}
+                        
+                        ${isLatest ? `
+                        <p class="text-red-500 font-bold mt-3 text-sm">
+                            *您再次提交評分，將會覆蓋此記錄。
+                        </p>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
     // 生成評分滑桿
     function generateRatingItems(options, prefix) {
         return options.map((option, index) => `
             <div class="rating-item">
                 <div class="rating-header"><span class="rating-title">${option.評分項目}</span></div>
-                <div class="rating-range">評分範圍: ${option.最低分} - ${option.最高分}分</div>
-                <input type="range" class="rating-slider" id="${prefix}-rating-${index}" min="${option.最低分}" max="${option.最高分}" value="3" step="1">
-                <div class="rating-value-display" id="${prefix}-value-${index}">3</div>
+                <div class="rating-range text-xs text-gray-500">評分範圍: ${option.最低分} - ${option.最高分}分</div>
+                <input type="range" class="rating-slider" id="${prefix}-rating-${index}" min="${option.最低分}" max="${option.最高分}" value="${option.最低分}" step="1">
+                <div class="rating-value-display" id="${prefix}-value-${index}">${option.最低分}</div>
             </div>
         `).join('');
     }
@@ -667,7 +532,7 @@
         return options.map((option, index) => `
             <div class="score-item" id="${prefix}-breakdown-${index}">
                 <span>${option.評分項目}:</span>
-                <span>0 分</span>
+                <span>${option.最低分} 分</span>
             </div>
         `).join('');
     }
@@ -706,16 +571,16 @@
         document.getElementById(`${prefix}TotalScore`).textContent = `總分: ${totalScore} / ${calculateMaxScore(options)}`;
     }
 
-    // 提交評分（修正版本）
+    // submit score to Google Sheets (UPDATED)
     async function submitEvaluation(sheetName, options, prefix) {
         if (!currentEvaluator) {
-            alert('請先登入');
+            showCustomMessage('請先登入', 'error');
             window.location.href = "login.html";
             return;
         }
 
         if (!currentEmployee) {
-            alert('請先選擇員工');
+            showCustomMessage('請先選擇員工', 'error');
             return;
         }
 
@@ -723,7 +588,7 @@
             '員工編號': currentEmployee.員工編號,
             '員工姓名': currentEmployee.員工姓名,
             '評核人': currentEvaluator,
-            '評分日期': new Date().toLocaleDateString('zh-TW'),
+            '評分日期': new Date(),
             '總分': 0
         };
 
@@ -747,14 +612,10 @@
             button.disabled = true;
             button.textContent = '提交中...';
 
-            const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
-            
+            // Fetch request (using no-cors as it is an App Script post)
             await fetch(scriptURL, {
                 method: "POST",
-                
-                headers: { 
-                    "Content-Type": "application/json"
-                },
+                mode: 'no-cors',
                 body: JSON.stringify({
                     action: "saveEvaluation",
                     sheetName: sheetName,
@@ -762,95 +623,38 @@
                 })
             });
 
-            // 顯示成功訊息
-            const successMsg = document.createElement('div');
-            successMsg.className = 'success';
-            alert(`${sheetName}已成功提交！`);
-            button.parentElement.prepend(successMsg);
+            
+            showCustomMessage(`${sheetName}已成功提交！`, 'success');
+            
+            // 1. Re-fetch history records for detail view update
+            await loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
 
-            setTimeout(() => {
-                successMsg.remove();
-                button.disabled = false;
-                button.textContent = `提交${sheetName}`;
-            }, 2000);
+            // 2. Re-fetch all ratings for list view update
+            const updatedScores = await loadAllEvaluatorRatings(currentEvaluator);
+            employeeScores = updatedScores.reduce((acc, score) => {
+                acc[score.員工編號] = score;
+                return acc;
+            }, {});
+            
+            // 3. Re-display the employee list if currently on the list view (optional but good practice)
+            if (document.getElementById('employeeList').style.display !== 'none') {
+                displayEmployees(allEmployees);
+            }
+
 
         } catch (error) {
             console.error("提交評分失敗:", error);
-            alert("提交評分失敗，請稍後再試");
+            showCustomMessage("提交評分失敗，請稍後再試", 'error');
             
-            const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
-            const button = buttons[0];
-            button.disabled = false;
-            button.textContent = `提交${sheetName}`;
+        } finally {
+            
+            setTimeout(() => {
+                const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
+                const button = buttons[0];
+                button.disabled = false;
+                button.textContent = sheetName === SHEETS.TOUR_SCORE ? '提交考察團評分' : '提交會面評分';
+            }, 2000);
         }
-    }
-
-    async function loadHistoryRatings(employeeId, evaluator) {
-        const container = document.getElementById('historyRatingsContainer');
-        container.innerHTML = '<div class="no-data">正在載入歷史評分...</div>';
-
-        try {
-            // 使用 GET 請求，Action=getRatings
-            const url = `${scriptURL}?action=getRatings&employeeId=${employeeId}&evaluator=${evaluator}`;
-            
-            const response = await fetch(url);
-            const result = await response.json(); 
-
-            if (!result.success) {
-                container.innerHTML = `<div class="no-data" style="color: #c0392b;">載入歷史失敗: ${result.message}</div>`;
-                return;
-            }
-
-            const allHistory = result.data;
-            
-            if (!allHistory || (allHistory.tour.length === 0 && allHistory.interview.length === 0)) {
-                container.innerHTML = '<div class="no-data">無相關歷史評分記錄。</div>';
-                return;
-            }
-
-            // 顯示歷史數據
-            container.innerHTML = `
-                ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99')}
-                ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#ff6b35')}
-            `;
-            
-        } catch (error) {
-            console.error("載入歷史評分失敗:", error);
-            container.innerHTML = `<div class="no-data" style="color: #e74c3c;">網絡或腳本錯誤，無法載入歷史記錄。</div>`;
-        }
-    }
-
-    // 渲染歷史記錄的輔助函數
-    function renderHistorySection(records, title, color) {
-        if (records.length === 0) {
-            return ''; // 如果沒有記錄則不顯示區塊
-        }
-        
-        // 獲取最新一條記錄 (假設 App Script 已經排序或最後一條就是最新)
-        const latestRecord = records[records.length - 1]; 
-        
-        let detailHtml = Object.keys(latestRecord).map(key => {
-            // 排除基礎欄位，只顯示評分細節
-            if (!['員工編號', '員工姓名', '評核人', '總分', '評分日期'].includes(key) && latestRecord[key] !== undefined && latestRecord[key] !== '') {
-                return `<p style="margin-left: 10px; font-size: 14px;">${key}: **${latestRecord[key]}** 分</p>`;
-            }
-            return '';
-        }).join('');
-
-        return `
-            <div style="border: 1px solid #ddd; border-left: 5px solid ${color}; padding: 15px; margin-top: 15px; border-radius: 5px; background: #fff;">
-                <h4 style="margin-top: 0; color: ${color}; font-size: 18px;">${title} (最新記錄)</h4>
-                <p><strong>評分日期：</strong>${latestRecord['評分日期'] || 'N/A'}</p>
-                <p><strong>總分：</strong><span style="font-size: 1.2em; font-weight: bold; color: #28a745;">${latestRecord['總分'] || 'N/A'}</span></p>
-                <details style="margin-top: 10px;">
-                    <summary style="font-weight: bold; cursor: pointer; color: #555;">點擊查看評分細節</summary>
-                    <div style="padding-top: 5px;">${detailHtml}</div>
-                </details>
-                <p style="color: #dc3545; font-weight: bold; margin-top: 10px; font-size: 14px;">
-                    *您再次提交評分，將會**覆蓋**此最新記錄。
-                </p>
-            </div>
-        `;
     }
 
     // 返回員工列表
@@ -860,30 +664,14 @@
         currentEmployee = null;
     }
 
-    // 搜尋過濾
-    function filterEmployees() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allEmployees.filter(emp =>
-            (emp.員工姓名 && emp.員工姓名.toLowerCase().includes(searchTerm)) ||
-            (emp.員工編號 && emp.員工編號.toLowerCase().includes(searchTerm))
-        );
-        displayEmployees(filtered);
-    }
-
-    function showLoading() { 
-        document.getElementById('employeeGrid').innerHTML = '<div class="loading">載入中...</div>'; 
-    }
-    
-    function hideLoading() {}
-    
-    function showError(message) { 
-        document.getElementById('employeeGrid').innerHTML = `<div class="error">${message}</div>`; 
-    }
-
-    // 登出功能
+    // logout (UPDATED - Removed alert())
     function logout() {
+        showCustomMessage('已登出', 'info');
         localStorage.removeItem("currentEvaluator");
-        window.location.href = "login.html";
+        // history.replaceState(null, '', '/'); // Removed history manipulation for simplicity
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 500);
     }
     </script>
 </body>

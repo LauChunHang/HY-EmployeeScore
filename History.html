@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>評核歷史記錄</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        .loading-spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%;
+            width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 調整 details 箭頭的樣式 */
+        details summary { list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="p-6">
+
+    
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-8 min-h-screen">
+        
+        <!-- 頂部導航 -->
+        <div class="flex justify-between items-center mb-8 border-b pb-4">
+            <div class="flex items-center">
+                 <!-- 圖片路徑 -->
+                <img src="HongYipLogo.png" alt="logo" class="w-12 h-12 mr-4 object-contain" onerror="this.style.display='none'">
+                <h1 class="text-2xl font-bold text-[#004d99]">您的評核歷史記錄</h1>
+            </div>
+            <div>
+                <span class="mr-4 text-gray-600">評核人：<strong id="evaluatorName" class="text-[#ff6b35]">...</strong></span>
+                <a href="index.html" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">
+                    ← 返回評分首頁
+                </a>
+            </div>
+        </div>
+
+        <!-- 統計摘要 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <p class="text-sm text-gray-500">總評核次數</p>
+                <p class="text-2xl font-bold text-blue-700" id="totalCount">0</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
+                <p class="text-sm text-gray-500">最近評核日期</p>
+                <p class="text-xl font-bold text-green-700" id="lastDate">-</p>
+            </div>
+        </div>
+
+        <!-- 內容區域 -->
+        <div id="contentArea">
+            <div id="loading" class="text-center py-10">
+                <div class="loading-spinner"></div>
+                <p class="text-gray-500 mt-2">正在載入您的所有評分記錄...</p>
+            </div>
+            
+            <div id="historyListContainer" class="hidden">
+                <div id="historyList" class="space-y-6">
+                    <!-- 詳細記錄卡片將在此處插入 -->
+                </div>
+            </div>
+
+            <div id="noDataMessage" class="hidden text-center py-10 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                尚無任何評分記錄。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ 必須與 index.html 使用相同的 URL
+        const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const evaluator = localStorage.getItem("currentEvaluator");
+            
+            if (!evaluator) {
+                // 使用自訂的訊息框代替 alert
+                console.error("請先登入"); 
+                window.location.href = "login.html";
+                return;
+            }
+
+            document.getElementById('evaluatorName').textContent = evaluator;
+            fetchAllHistory(evaluator);
+        });
+
+        async function fetchAllHistory(evaluator) {
+            try {
+                // 不傳遞 employeeId，後端將返回該評核人的所有記錄
+                const url = `${scriptURL}?action=getRatings&evaluator=${encodeURIComponent(evaluator)}`;
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.success) {
+                    renderDetailRecords(result.data);
+                } else {
+                    showError(result.message);
+                }
+            } catch (error) {
+                console.error("獲取歷史記錄失敗:", error);
+                showError("無法連線到伺服器，請稍後再試。");
+            }
+        }
+        
+        /**
+         * 使用詳細卡片格式渲染所有歷史記錄
+         * @param {object} data - 包含 tour 和 interview 記錄的物件
+         */
+        function renderDetailRecords(data) {
+            const { tour, interview } = data;
+            
+            // 合併並標記類型，添加顏色代碼
+            const allRecords = [
+                ...tour.map(r => ({ 
+                    ...r, 
+                    type: '考察團評分', 
+                    color: '#004d99', // Hong Yip Blue
+                    typeColorClass: 'text-[#004d99]' 
+                })),
+                ...interview.map(r => ({ 
+                    ...r, 
+                    type: '會面評分', 
+                    color: '#ff6b35', // Hong Yip Orange
+                    typeColorClass: 'text-[#ff6b35]' 
+                }))
+            ];
+
+            document.getElementById('loading').classList.add('hidden');
+
+            if (allRecords.length === 0) {
+                document.getElementById('noDataMessage').classList.remove('hidden');
+                return;
+            }
+
+            // 按日期降序排列 (最新的在上面)
+            allRecords.sort((a, b) => new Date(b['評分日期'] || 0) - new Date(a['評分日期'] || 0));
+
+            // 更新統計數據
+            document.getElementById('totalCount').textContent = allRecords.length;
+            document.getElementById('lastDate').textContent = allRecords[0]['評分日期'] || '-';
+
+            const historyList = document.getElementById('historyList');
+            
+            historyList.innerHTML = allRecords.map((record, index) => {
+                const isLatest = index === 0;
+                const color = record.color; // 評分類型主色
+                
+                // 根據類型選擇標籤顏色
+                const latestBadgeClass = isLatest ? 
+                    'text-green-700 bg-green-200 py-1 px-2 rounded-full shadow-sm' : 
+                    'text-gray-500 bg-gray-100 py-1 px-2 rounded-full';
+
+                // 生成評分細項 HTML
+                let detailHtml = Object.keys(record).map(key => {
+                    // 排除核心欄位，只顯示評分項目
+                    if (!['員工編號', '員工姓名', '評核人', '總分', '評分日期', 'type', 'color', 'typeColorClass'].includes(key) && 
+                        record[key] !== undefined && record[key] !== '' && record[key] != null) {
+                        return `<p class="ml-4 text-sm py-1 border-b border-gray-100 last:border-b-0"><span class="font-medium text-gray-600">${key}:</span> <strong class="text-gray-800">${record[key]}</strong> 分</p>`;
+                    }
+                    return '';
+                }).filter(html => html !== '').join('');
+
+                return `
+                    <div class="history-record p-5 border rounded-xl shadow-sm transition hover:shadow-md 
+                        ${isLatest ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'}">
+                        
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <!-- 員工資訊與評分類型 -->
+                                <p class="text-base font-semibold text-gray-700">
+                                    ${record['員工姓名']} (${record['員工編號']})
+                                </p>
+                                <p class="text-sm font-bold ${record.typeColorClass} mb-2">
+                                    ${record.type}
+                                </p>
+
+                                <!-- 總分 -->
+                                <p class="text-xl font-bold">
+                                    總分: <span class="text-green-600 text-2xl">${record['總分'] || 'N/A'}</span>
+                                </p>
+                            </div>
+
+                            <div class="flex flex-col items-end space-y-2">
+                                <span class="text-xs font-bold ${latestBadgeClass}">
+                                    ${isLatest ? '最新記錄' : '過往記錄'}
+                                </span>
+                                <p class="text-sm text-gray-600">
+                                    <strong>日期：</strong>${record['評分日期'] || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 評分細節 - 使用 Details 展開 -->
+                        ${detailHtml ? `
+                        <details class="mt-3 pt-3 border-t">
+                            <summary class="font-bold cursor-pointer text-gray-700 hover:text-gray-900 text-sm flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 transform rotate-0 transition-transform details-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                                點擊查看評分細節
+                            </summary>
+                            <div class="mt-2 pl-4 bg-gray-50 p-2 rounded border border-gray-200">
+                                ${detailHtml}
+                            </div>
+                        </details>
+                        ` : ''}
+                        
+                        <!-- 提示訊息 -->
+                        ${isLatest ? `
+                        <p class="text-red-500 font-bold mt-3 text-xs p-2 bg-red-50 rounded">
+                            ⚠️ 此記錄為您對該員工該類型的最新評分。
+                        </p>
+                        ` : ''}
+                        <button onclick="showDetail('${record['員工編號']}')" class="w-full mt-4 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+                            返回評分該員工
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('historyListContainer').classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').innerHTML = `<p class="text-red-500 font-bold">錯誤：${msg}</p>`;
+        }
+
+        // 跳轉回 index.html 並可選擇性帶上員工參數
+        function showDetail(empId) {
+            // 這裡直接跳轉回主頁，讓使用者在主頁搜尋或點擊該員工
+            // 如果需要自動展開該員工，需要在 index.html 中增加處理 URL 參數的邏輯
+            window.location.href = 'index.html?employee=' + empId;
+        }
+    </script>
+</body>
+</html>
