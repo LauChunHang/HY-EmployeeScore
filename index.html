@@ -45,32 +45,38 @@
     <div id="customMessageBox" class="custom-message-box"></div>
     
     <!-- 頂部導覽列 (Sticky Header) - 新增並替換原有的居中標題區塊 -->
-    <header class="sticky top-0 z-10 bg-white shadow-xl p-4 border-b border-indigo-100">
-        <div class="container mx-auto flex items-center justify-between">
-            
-            <!-- 左側: 標誌與系統名稱 -->
-            <div class="flex items-center">
-                <!-- 替換 HongYipLogo.png 為 Tailwind 樣式的佔位符 -->
-                <img src="HongYipLogo.png" alt="logo" class="w-16 h-16 mr-4 object-contain">
-                <h1 class="text-xl font-extrabold tracking-tight" style="color: #004d99;">
-                    員工評分系統
-                </h1>
-            </div>
+   <header class="sticky top-0 z-10 bg-white shadow-sm py-2 border-b border-indigo-100">
+  <div class="container mx-auto flex items-center justify-between px-2">
+    
+    <!-- 左側: 標誌與系統名稱 -->
+    <div class="flex items-center">
+      <img src="HongYipLogo.png" alt="logo" class="w-10 h-10 mr-3 object-contain">
 
-            <!-- 右側: 返回員工列表按鈕 (持久性顯示) -->
-            <button
-                id="returnToListButton"
-                onclick="showEmployeeList()"
-                class="py-2 px-4 rounded-full font-semibold flex items-center transition duration-200"
-                style="min-width: 160px;"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2">
-                    <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
-                </svg>
-                返回員工列表
-            </button>
-        </div>
-    </header>
+      <h1 class="text-lg font-bold tracking-tight" style="color: #004d99;">
+        員工評分系統
+      </h1>
+    </div>
+
+    <!-- 右側: 返回按鈕 -->
+    <button
+      id="returnToListButton"
+      onclick="showEmployeeList()"
+      class="py-1.5 px-3 rounded-full text-sm font-semibold flex items-center transition duration-200"
+      style="min-width: 120px;"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"
+        class="w-4 h-4 mr-1.5">
+        <path d="M19 12H5"/>
+        <path d="m12 19-7-7 7-7"/>
+      </svg>
+      返回列表
+    </button>
+
+  </div>
+</header>
+
 
     <!-- 主內容區塊 (調整為使用 mx-auto 和 py-8) -->
     <main class="container mx-auto py-8 px-4">
@@ -706,7 +712,7 @@
         });
 
         // 顯示成功訊息
-        showCustomMessage(`${sheetName}已成功提交！系統將在短暫延遲後更新歷史記錄。`, 'success');
+        alert(`${sheetName}已成功提交！如你要重新評分可以再次提交。`, 'success');
         
         
         // 增加一個短暫延遲 (建議 2-3 秒)，確保 App Script 有時間寫入新數據
