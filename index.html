@@ -340,7 +340,7 @@ function displayAllInfo() {
                         <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
                         <p><strong>公司名稱：</strong>${record.公司名稱 || ''}</p>
                         <p><strong>離職時職位：</strong>${record.離職時職位 || ''}</p>
-                        <p><strong>入職前總年資：</strong>${record.入職前總年資 || ''}</p>
+                        <p><strong>該工作年資：</strong>${record.該工作年資 || ''}</p>
                     </div>
                 `).join('') : '<div class="no-data">沒有工作經驗記錄</div>'}
             </div>
@@ -360,7 +360,7 @@ function displayAllInfo() {
 
             <!-- 歷史評分記錄區塊 -->
             <div class="detail-section mt-8">
-                <h3>📜 你的評分記錄 (${currentEvaluator} 的評分)</h3>
+                <h3>📜 上次評分記錄 (${currentEvaluator} 的評分)</h3>
                 <div id="historyRatingsContainer">正在載入您的歷史記錄...</div>
             </div>
             
@@ -624,7 +624,8 @@ function renderHistorySection(records, title, color, type) {
             });
 
             
-            showCustomMessage(`${sheetName}已成功提交！頁面將自動刷新。`, 'success');
+
+            alert(`${sheetName}已成功提交！頁面將自動刷新。`, 'success');
             
             // ************ 根據使用者要求：提交成功後，自動刷新整個頁面 ************
             // 這將會確保所有資料（員工列表、歷史記錄）都是最新的
@@ -634,7 +635,7 @@ function renderHistorySection(records, title, color, type) {
 
         } catch (error) {
             console.error("提交評分失敗:", error);
-            showCustomMessage("提交評分失敗，請稍後再試", 'error');
+            alert("提交評分失敗，請稍後再試", 'error');
             
             // 失敗時重新啟用按鈕
             setTimeout(() => {
