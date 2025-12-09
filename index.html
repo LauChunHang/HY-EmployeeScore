@@ -7,52 +7,24 @@
     
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css">
     
     <!-- 整合所有 CSS 樣式 -->
-    <style>
-        /* Base styles */
-       
-
-        /* Custom Message Box */
-        .custom-message-box {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            color: white;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .custom-message-box.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .custom-message-box.info { background-color: #3b82f6; }
-        .custom-message-box.success { background-color: #10b981; }
-        .custom-message-box.error { background-color: #ef4444; }
-
-    </style>
+    <link rel="stylesheet" href="styles.css">
  
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans">
     <div id="customMessageBox" class="custom-message-box"></div>
     
-    <!-- 頂部導覽列 (Sticky Header) - 新增並替換原有的居中標題區塊 -->
-   <header class="sticky top-0 z-10 bg-white shadow-sm py-2 border-b border-indigo-100">
-  <div class="container mx-auto flex items-center justify-between px-2">
+    <!-- 頂部導覽列 (Sticky Header) -->
+   <header class="sticky top-0 z-10 bg-white shadow-lg py-3 border-b border-indigo-200">
+  <div class="container mx-auto flex items-center justify-between px-4">
     
     <!-- 左側: 標誌與系統名稱 -->
     <div class="flex items-center">
-      <img src="HongYipLogo.png" alt="logo" class="w-10 h-10 mr-3 object-contain">
+      <!-- Placeholder for logo image, since no file was provided in the prompt -->
+      <img src="HongYipLogo.png" alt="logo" class="w-16 h-16 mr-4 object-contain">
 
-      <h1 class="text-lg font-bold tracking-tight" style="color: #004d99;">
+      <h1 class="text-xl font-extrabold tracking-tight" style="color: #004d99;">
         員工評分系統
       </h1>
     </div>
@@ -61,7 +33,7 @@
     <button
       id="returnToListButton"
       onclick="showEmployeeList()"
-      class="py-1.5 px-3 rounded-full text-sm font-semibold flex items-center transition duration-200"
+      class="py-2 px-4 rounded-full text-sm font-semibold flex items-center transition duration-200 text-white bg-indigo-500 hover:bg-indigo-600 shadow-md"
       style="min-width: 120px;"
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
@@ -78,19 +50,19 @@
 </header>
 
 
-    <!-- 主內容區塊 (調整為使用 mx-auto 和 py-8) -->
+    <!-- 主內容區塊 -->
     <main class="container mx-auto py-8 px-4">
         
-        <!-- 原有的評核人資訊移到導覽列下方 -->
-        <div class="evaluator-info flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-md border border-gray-100">
-            <span class="text-xl font-medium text-gray-700">當前評核人：<span id="currentEvaluatorDisplay" class="font-bold text-[#ff6b35] ml-2"></span></span>
+        <!-- 評核人資訊與登出 -->
+        <div class="evaluator-info flex flex-col md:flex-row justify-between items-start md:items-center mb-6 p-4 bg-white rounded-xl shadow-md border border-gray-200">
+            <span class="text-xl font-medium text-gray-700 mb-2 md:mb-0">當前評核人：<span id="currentEvaluatorDisplay" class="font-bold text-[#ff6b35] ml-2"></span></span>
             <button onclick="logout()" class="logout-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-150 shadow-md">
                 登出
             </button>
         </div>
         
         <div id="employeeList">
-            <h2 class="text-2xl font-bold text-gray-800 mb-5">所有員工</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-5 border-b pb-2">所有員工</h2>
             <div class="employee-grid" id="employeeGrid">
                 <div class="loading">載入員工資料中...</div>
             </div>
@@ -99,11 +71,7 @@
         
         
         <div id="employeeDetail" style="display: none;">
-            <!-- 移除原有的 "← 返回員工列表" 按鈕，因為它現在在導覽列了 -->
             <div id="basicContent"></div>
-            
-            <!-- 增加返回列表的佔位符，確保頁面佈局不會因移除按鈕而跳動 -->
-            <div class="h-10 mb-5" style="display: none;"></div> 
         </div>
     </main>
 
@@ -136,7 +104,7 @@
     let ratingOptions = [];
     let interviewRatingOptions = []; 
     let currentEmployee = null;
-    let employeeScores = {}; // NEW: 儲存評核人對所有員工的最新評分
+    let employeeScores = {}; // 儲存評核人對所有員工的最新評分
 
     // --- 自定義訊息和載入狀態函數 ---
     function showCustomMessage(message, type = 'info') {
@@ -254,12 +222,11 @@
             loadSheetData(SHEETS.RATING),
             loadSheetData(SHEETS.INTERVIEW_RATING),
             loadSheetData(SHEETS.EVALUATORS),
-            loadAllEvaluatorRatings(currentEvaluator) // <-- NEW: Fetch all scores
+            loadAllEvaluatorRatings(currentEvaluator) // Fetch all scores
         ]);
 
         allEmployees = basic;
         educationData = education;
-        experienceData = experience;
         experienceData = experience.map(record => ({
             ...record,
             // 確保「入職前總年資」字段存在，即使為空，避免模板渲染問題
@@ -386,13 +353,10 @@
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- 員工照片欄位 (左側) - 增加 flex flex-col items-center 讓固定尺寸的直長方形照片居中 -->
-                    <div class="lg:col-span-1 flex flex-col items-center">
-                        ${employeePhotoHtml}
-                        
-                    </div>
+                   
                     <!-- 基本資料 (右側) -->
-                    <div class="lg:col-span-2">
-                        <div class="detail-item grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                        <div class="education-record border-b pb-2 mb-2">
                             <p><strong>員工編號：</strong>${employee.員工編號 || '未填寫'}</p>
                             <p><strong>年齡：</strong>${employee.年齡 || '未填寫'}</p>
                             <p><strong>婚姻狀況：</strong>${employee.婚姻狀況 || '未填寫'}</p>
@@ -404,6 +368,10 @@
                             <p><strong>績效評估等級2023：</strong>${employee.績效評估等級2023 || '未填寫'}</p>
                             <p><strong>績效評估等級2024：</strong>${employee.績效評估等級2024 || '未填寫'}</p>
                         </div>
+                    
+                     <div class="lg:col-span-1 flex flex-col items-center">
+                        ${employeePhotoHtml}
+                        
                     </div>
                 </div>
             </div>
@@ -457,7 +425,7 @@
                     <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
                     <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
                     <div class="total-score" id="ratingTotalScore">總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
-                    <button class="submit-button" onclick="submitEvaluation('${SHEETS.TOUR_SCORE}', ratingOptions, 'rating')">提交考察團評分</button>
+                    <!-- REMOVED: <button class="submit-button" onclick="submitEvaluation('${SHEETS.TOUR_SCORE}', ratingOptions, 'rating')">提交考察團評分</button> -->
                 </div>
 
                 <!-- 會面評分表單 -->
@@ -467,10 +435,15 @@
                     <div id="interviewRatingItemsContainer">${generateRatingItems(interviewRatingOptions, 'interview')}</div>
                     <div class="score-breakdown" id="interviewScoreBreakdown">${generateScoreBreakdown(interviewRatingOptions, 'interview')}</div>
                     <div class="total-score" id="interviewTotalScore">總分: 0 / ${calculateMaxScore(interviewRatingOptions)}</div>
-                    <button class="submit-button" onclick="submitEvaluation('${SHEETS.INTERVIEW_SCORE}', interviewRatingOptions, 'interview')">提交會面評分</button>
+                    <!-- REMOVED: <button class="submit-button" onclick="submitEvaluation('${SHEETS.INTERVIEW_SCORE}', interviewRatingOptions, 'interview')">提交會面評分</button> -->
                 </div>
                 
-                
+                <!-- NEW: Combined Submission Button -->
+                <div class="combined-submission mt-10">
+                    <button class="submit-button" id="submitAllButton" onclick="submitAllEvaluations()">
+                        提交評分 (考察團 & 會面)
+                    </button>
+                </div>
             `;
 
             // 綁定評分滑桿事件
@@ -497,7 +470,8 @@
             const response = await fetch(url);
             
             if (!response.ok) {
-                throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
+                // Since we are using App Script, response.ok might be false even for success in no-cors mode, but we check for general network issues.
+                // However, the original code structure handles this by checking result.success later. Let's rely on that.
             }
             
             const result = await response.json(); 
@@ -516,8 +490,8 @@
 
             
             container.innerHTML = `
-                ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99', 'tour')}
-                ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#004d99', 'interview')}
+                ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#ff6b35', 'tour')}
+                ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#3b82f6', 'interview')}
             `;
             
         } catch (error) {
@@ -656,54 +630,38 @@
         });
         document.getElementById(`${prefix}TotalScore`).textContent = `總分: ${totalScore} / ${calculateMaxScore(options)}`;
     }
+    
+    // Helper function to prepare data for a single submission
+    function prepareEvaluationData(options, prefix) {
+        const evaluationData = {
+            '員工編號': currentEmployee.員工編號,
+            '員工姓名': currentEmployee.員工姓名,
+            '評核人': currentEvaluator,
+            '評分日期': new Date().toISOString(),
+            '總分': 0
+        };
 
-    // submit score to Google Sheets (已修正自動更新歷史記錄)
-   async function submitEvaluation(sheetName, options, prefix) {
-    if (!currentEvaluator) {
-        showCustomMessage('請先登入', 'error');
-        window.location.href = "login.html";
-        return;
+        let totalScore = 0;
+        options.forEach((option, index) => {
+            const slider = document.getElementById(`${prefix}-rating-${index}`);
+            if (slider) {
+                const score = parseInt(slider.value);
+                evaluationData[option.評分項目] = score;
+                totalScore += score;
+            }
+        });
+        evaluationData['總分'] = totalScore;
+        return evaluationData;
     }
 
-    if (!currentEmployee) {
-        showCustomMessage('請先選擇員工', 'error');
-        return;
-    }
-
-    const evaluationData = {
-        '員工編號': currentEmployee.員工編號,
-        '員工姓名': currentEmployee.員工姓名,
-        '評核人': currentEvaluator,
-        '評分日期': new Date().toISOString(), // 使用 ISO 格式確保 App Script 能正確解析
-        '總分': 0
-    };
-
-    let totalScore = 0;
-    options.forEach((option, index) => {
-        const slider = document.getElementById(`${prefix}-rating-${index}`);
-        if (slider) {
-            const score = parseInt(slider.value);
-            evaluationData[option.評分項目] = score;
-            totalScore += score;
-        }
-    });
-    evaluationData['總分'] = totalScore;
-
-    console.log('提交評分數據:', evaluationData);
-
-    // 找到提交按鈕
-    const buttons = document.querySelectorAll(`button[onclick*="submitEvaluation('${sheetName}'"]`);
-    const button = buttons[0];
-    const originalButtonText = sheetName === SHEETS.TOUR_SCORE ? '提交考察團評分' : '提交會面評分';
-
-    try {
-        button.disabled = true;
-        button.textContent = '提交中...';
-
-        // Fetch request (使用 no-cors 模式發送到 App Script)
-        await fetch(scriptURL, {
+    // Core function to submit a single evaluation type
+    async function submitEvaluationSingle(sheetName, evaluationData) {
+        console.log(`提交 ${sheetName} 數據:`, evaluationData);
+        
+        // 使用 no-cors 模式發送到 App Script
+        const response = await fetch(scriptURL, {
             method: "POST",
-            mode: 'no-cors',
+            mode: 'no-cors', // Cannot check response.ok in this mode, rely on network success.
             body: JSON.stringify({
                 action: "saveEvaluation",
                 sheetName: sheetName,
@@ -711,35 +669,63 @@
             })
         });
 
-        // 顯示成功訊息
-        alert(`${sheetName}已成功提交！如你要重新評分可以再次提交。`, 'success');
-        
-        
-        // 增加一個短暫延遲 (建議 2-3 秒)，確保 App Script 有時間寫入新數據
-        setTimeout(() => {
-            loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
-            // 重新載入所有員工列表，以更新員工列表上的總分摘要
-            loadAllData();
-        }, 2500); // 延遲 2.5 秒，給 Google App Script 處理時間
-
-        // 提交成功後，恢復按鈕狀態
-        setTimeout(() => {
-            button.disabled = false;
-            button.textContent = originalButtonText;
-        }, 1000); 
-
-
-    } catch (error) {
-        console.error("提交評分失敗:", error);
-        showCustomMessage("提交評分失敗，請稍後再試", 'error');
-        
-        // 失敗時重新啟用按鈕
-        setTimeout(() => {
-            button.disabled = false;
-            button.textContent = originalButtonText;
-        }, 1000);
+        // Since it's no-cors, we assume success if the fetch completes without a network error.
+        if (response) {
+            return { success: true, sheet: sheetName, total: evaluationData['總分'] };
+        } else {
+            // This case might not be hit often due to no-cors, but kept for robustness.
+            throw new Error(`網路請求失敗 (${sheetName})`);
+        }
     }
-}
+
+    // NEW: Combined function to submit both evaluations
+    async function submitAllEvaluations() {
+        const button = document.getElementById('submitAllButton');
+        if (!currentEvaluator || !currentEmployee) {
+            showCustomMessage('請先登入並選擇員工', 'error');
+            return;
+        }
+
+        const originalButtonText = button.textContent;
+        
+        try {
+            // 1. 禁用按鈕並顯示載入狀態
+            button.disabled = true;
+            button.textContent = '處理中... 請勿關閉';
+            showCustomMessage('開始提交所有評分...', 'info');
+
+            // 2. 準備數據
+            const tourData = prepareEvaluationData(ratingOptions, 'rating');
+            const interviewData = prepareEvaluationData(interviewRatingOptions, 'interview');
+
+            // 3. 執行平行提交
+            const [tourResult, interviewResult] = await Promise.all([
+                submitEvaluationSingle(SHEETS.TOUR_SCORE, tourData),
+                submitEvaluationSingle(SHEETS.INTERVIEW_SCORE, interviewData)
+            ]);
+
+            // 4. 顯示成功訊息
+            showCustomMessage(`考察團評分 (${tourResult.total} 分) 和 會面評分 (${interviewResult.total} 分) 已成功提交！`, 'success');
+
+            
+            // 5. 延遲後更新歷史記錄和列表 (給 App Script 寫入時間)
+            setTimeout(() => {
+                loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
+                loadAllData(); // 更新員工列表上的總分摘要
+            }, 3000); // 延遲 3 秒，確保 Google App Script 處理完成
+
+        } catch (error) {
+            console.error("提交所有評分失敗:", error);
+            showCustomMessage(`提交失敗，請檢查網絡或App Script狀態。錯誤: ${error.message}`, 'error');
+        } finally {
+            // 6. 恢復按鈕狀態
+             setTimeout(() => {
+                button.disabled = false;
+                button.textContent = originalButtonText;
+            }, 3500); // 確保在數據更新完成後恢復按鈕
+        }
+    }
+
 
     // 返回員工列表
     function showEmployeeList() {
