@@ -16,50 +16,41 @@
     <div id="customMessageBox" class="custom-message-box"></div>
     
     <!-- 頂部導覽列 (Sticky Header) -->
-   <header class="sticky top-0 z-10 bg-white shadow-lg py-3 border-b border-indigo-200">
+   <header class="sticky top-0 z-10 bg-white shadow-md py-3 border-b border-gray-200">
   <div class="container mx-auto flex items-center justify-between px-4">
     
-    <!-- 左側: 標誌與系統名稱 -->
+    <!-- Logo + 名稱 -->
     <div class="flex items-center">
-      <!-- Placeholder for logo image, since no file was provided in the prompt -->
-      <img src="HongYipLogo.png" alt="logo" class="w-16 h-16 mr-4 object-contain">
-
-      <h1 class="text-xl font-extrabold tracking-tight" style="color: #004d99;">
-        員工評分系統
-      </h1>
+        <button 
+                        onclick="showEmployeeList()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow transition duration-150">
+                        返回列表
+                    </button>
+      <img src="HongYipLogo.png" class="w-14 h-14 mr-3 object-contain">
+      <h1 class="text-xl font-bold text-indigo-700">員工評分系統</h1>
     </div>
 
-    <!-- 右側: 返回按鈕 -->
-    <button
-      id="returnToListButton"
-      onclick="showEmployeeList()"
-      class="py-2 px-4 rounded-full text-sm font-semibold flex items-center transition duration-200 text-white bg-indigo-500 hover:bg-indigo-600 shadow-md"
-      style="min-width: 120px;"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="2"
-        stroke-linecap="round" stroke-linejoin="round"
-        class="w-4 h-4 mr-1.5">
-        <path d="M19 12H5"/>
-        <path d="m12 19-7-7 7-7"/>
-      </svg>
-      返回列表
-    </button>
+    <!-- 返回按鈕 -->
+    <span class="text-lg font-medium text-gray-700">
+        當前評核人：
+        <span id="currentEvaluatorDisplay" class="font-bold text-indigo-600"></span>
+    </span>
 
-  </div>
+    <div class="flex gap-3 mt-3 md:mt-0">
+        <button onclick="Ranklist()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow">
+            排行榜
+        </button>
+        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow">
+            登出
+        </button>
+    </div>
 </header>
 
 
     <!-- 主內容區塊 -->
     <main class="container mx-auto py-8 px-4">
         
-        <!-- 評核人資訊與登出 -->
-        <div class="evaluator-info flex flex-col md:flex-row justify-between items-start md:items-center mb-6 p-4 bg-white rounded-xl shadow-md border border-gray-200">
-            <span class="text-xl font-medium text-gray-700 mb-2 md:mb-0">當前評核人：<span id="currentEvaluatorDisplay" class="font-bold text-[#ff6b35] ml-2"></span></span>
-            <button onclick="logout()" class="logout-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-150 shadow-md">
-                登出
-            </button>
-        </div>
+        
         
         <div id="employeeList">
             <h2 class="text-2xl font-bold text-gray-800 mb-5 border-b pb-2">所有員工</h2>
@@ -81,7 +72,6 @@
     // 由於我們使用 App Script 代理寫入，Sheets API Key 可能只用於讀取（如果有的話），這裡保留
     const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0'; 
     const scriptURL = 'https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec';
-    
     
     const SHEETS = {
         BASIC: '員工資料',
@@ -364,9 +354,9 @@
                             <p><strong>職位：</strong>${employee.職位 || '未填寫'}</p>
                             <p><strong>地域：</strong>${employee.地域 || '未填寫'}</p>
                             <p><strong>部門/分區：</strong>${employee.部門 || '未填寫'}</p>
-                            <p><strong>到職日期：</strong>${employee.到職日期 || '未填寫'}</p>
                             <p><strong>績效評估等級2023：</strong>${employee.績效評估等級2023 || '未填寫'}</p>
                             <p><strong>績效評估等級2024：</strong>${employee.績效評估等級2024 || '未填寫'}</p>
+                             <p><strong>服務年資：</strong>${employee.服務年資 || '未填寫'}</p>
                         </div>
                     
                      <div class="lg:col-span-1 flex flex-col items-center">
@@ -394,7 +384,7 @@
                             <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
                             <p><strong>公司名稱：</strong>${record.公司名稱 || ''}</p>
                             <p><strong>離職時職位：</strong>${record.離職時職位 || ''}</p>
-                            <p><strong>該工作年資：</strong>${record.該工作年資 || ''}</p>
+                            <p><strong>該工作年資：</strong>${record.該職位年資 || ''}</p>
                         </div>
                     `).join('') : '<div class="no-data text-gray-500">沒有工作經驗記錄</div>'}
                 </div>
@@ -424,7 +414,7 @@
                     <div class="evaluator-display text-lg font-medium mb-4 text-gray-600">評核人：${currentEvaluator}</div>
                     <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
                     <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
-                    <div class="total-score" id="ratingTotalScore">總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
+                    <div class="total-score" id="ratingTotalScore">考總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
                     <!-- REMOVED: <button class="submit-button" onclick="submitEvaluation('${SHEETS.TOUR_SCORE}', ratingOptions, 'rating')">提交考察團評分</button> -->
                 </div>
 
@@ -462,6 +452,27 @@
         
         container.innerHTML = '<div class="no-data text-center p-5 text-blue-500">正在載入歷史評分...</div>';
 
+        // Mock Data for App Script Placeholder
+        if (scriptURL === 'YOUR_APP_SCRIPT_URL_HERE') {
+            console.warn("使用 Mock 歷史記錄，請檢查 scriptURL 是否已設定。");
+            const mockHistory = {
+                tour: [
+                    { '員工編號': employeeId, '員工姓名': currentEmployee.員工姓名, '評核人': evaluator, '總分': '8', '評分日期': '2024/05/01', '領導力': '4', '團隊合作': '4' },
+                    { '員工編號': employeeId, '員工姓名': currentEmployee.員工姓名, '評核人': evaluator, '總分': '7', '評分日期': '2023/11/10', '領導力': '3', '團隊合作': '4' }
+                ],
+                interview: [
+                    { '員工編號': employeeId, '員工姓名': currentEmployee.員工姓名, '評核人': evaluator, '總分': '16', '評分日期': '2024/05/01', '溝通能力': '7', '專業知識': '9' }
+                ]
+            };
+            
+            const tourTotalSum = calculateRecordsTotalSum(mockHistory.tour);
+            const interviewTotalSum = calculateRecordsTotalSum(mockHistory.interview);
+            const combinedTotalSum = tourTotalSum + interviewTotalSum;
+            
+            container.innerHTML = renderCombinedHistory(mockHistory, tourTotalSum, interviewTotalSum, combinedTotalSum);
+            return;
+        }
+
         try {
             const url = `${scriptURL}?action=getRatings&employeeId=${encodeURIComponent(employeeId)}&evaluator=${encodeURIComponent(evaluator)}`;
             
@@ -470,8 +481,8 @@
             const response = await fetch(url);
             
             if (!response.ok) {
-                // Since we are using App Script, response.ok might be false even for success in no-cors mode, but we check for general network issues.
-                // However, the original code structure handles this by checking result.success later. Let's rely on that.
+                 // 這裡只捕獲網路錯誤，App Script 的邏輯錯誤會在結果中檢查
+                throw new Error("網絡錯誤或伺服器無響應");
             }
             
             const result = await response.json(); 
@@ -487,12 +498,12 @@
                 container.innerHTML = '<div class="no-data text-center p-5 bg-gray-100 rounded-lg text-gray-500">無相關歷史評分記錄。</div>';
                 return;
             }
-
             
-            container.innerHTML = `
-                ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#ff6b35', 'tour')}
-                ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#3b82f6', 'interview')}
-            `;
+            const tourTotalSum = calculateRecordsTotalSum(allHistory.tour);
+            const interviewTotalSum = calculateRecordsTotalSum(allHistory.interview);
+            const combinedTotalSum = tourTotalSum + interviewTotalSum;
+
+            container.innerHTML = renderCombinedHistory(allHistory, tourTotalSum, interviewTotalSum, combinedTotalSum);
             
         } catch (error) {
             console.error("載入歷史評分失敗:", error);
@@ -509,12 +520,22 @@
             `;
         }
     }
+    
+    // Helper function to render the combined history view
+    
 
-    function renderHistorySection(records, title, color, type) {
+    // UPDATED: 接收並顯示累積總和 (單獨區塊總和)
+    function renderHistorySection(records, title, color, sectionTotalSum) {
         if (records.length === 0) {
             return `
-                <div class="mb-6 p-4 border-l-4" style="border-left-color: ${color};">
-                    <h4 class="text-lg font-bold mb-2" style="color: ${color};">${title}</h4>
+                <div class="mb-6 p-4 border-l-4 rounded-lg shadow-inner" style="border-left-color: ${color}; background-color: ${color}10;">
+                    <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title} (0 條記錄)</h4>
+                    <!-- 🏆 累積總分顯示 -->
+                    <div class="p-4 mb-4 bg-white rounded-xl shadow-lg text-center border-b-4 border-indigo-400">
+                        <h5 class="text-lg font-semibold text-gray-700">該類別所有紀錄累積單項分數總和：</h5>
+                        <p class="text-5xl font-black text-indigo-700 mt-1">${sectionTotalSum.toFixed(1)}</p>
+                        <p class="text-xs text-gray-500 mt-2">（所有歷史單項分數的總和）</p>
+                    </div>
                     <div class="no-data text-center p-4 bg-gray-50 rounded text-gray-500">無${title}</div>
                 </div>
             `;
@@ -527,8 +548,11 @@
         });
         
         return `
-            <div class="mb-6 p-4 border-l-4" style="border-left-color: ${color};">
+            <div class="mb-6 p-4 border-l-4 rounded-lg shadow-inner" style="border-left-color: ${color}; background-color: ${color}10;">
                 <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title} (${records.length} 條記錄)</h4>
+                
+                
+                
                 ${sortedRecords.map((record, index) => {
                     const isLatest = index === 0;
                     let detailHtml = Object.keys(record).map(key => {
@@ -555,7 +579,6 @@
                             </div>
                             
                             ${detailHtml ? `
-                            
                                 
                                 <div class="pt-2">
                                     ${detailHtml}
@@ -570,9 +593,49 @@
                             ` : ''}
                         </div>
                     `;
+                    
                 }).join('')}
             </div>
         `;
+    }
+
+    function renderCombinedHistory(allHistory, tourTotalSum, interviewTotalSum, combinedTotalSum) {
+        let combinedTotalHtml = '';
+        if (combinedTotalSum > 0) {
+            combinedTotalHtml = `
+                <div class="p-6 mb-8 rounded-xl shadow-2xl text-center  border-4 ">
+                    <h5 class="text-xl font-bold text-gray-800 mb-2">歷史總體累積評分 (考察團 + 會面)</h5>
+                    <p class="text-6xl font-black text-red-600 mt-1">${combinedTotalSum.toFixed(1)}</p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        考察團累積總和: ${tourTotalSum.toFixed(1)} + 會面累積總和: ${interviewTotalSum.toFixed(1)}
+                    </p>
+                </div>
+            `;
+        } else {
+            combinedTotalHtml = `
+                <div class="p-4 mb-4 bg-gray-100 rounded-lg text-gray-500 text-center">
+                    無歷史評分數據累積。
+                </div>
+            `;
+        }
+        
+        return `
+            ${combinedTotalHtml}
+            ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99', tourTotalSum)}
+            ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#004d99', interviewTotalSum)}
+        `;
+    }
+
+     function calculateRecordsTotalSum(records) {
+        if (!Array.isArray(records)) {
+            return 0;
+        }
+        // records 陣列中的每個物件都有一個 '總分' 欄位
+        return records.reduce((sum, record) => {
+            // 嘗試將 '總分' 解析為浮點數，如果不是有效數字則視為 0
+            const score = parseFloat(record['總分']);
+            return sum + (isNaN(score) ? 0 : score);
+        }, 0);
     }
 
     // 生成評分滑桿
@@ -742,6 +805,14 @@
         localStorage.removeItem("currentEvaluator");
         setTimeout(() => {
             window.location.href = "login.html";
+        }, 500);
+    }
+
+    function Ranklist() {
+        
+        
+        setTimeout(() => {
+            window.location.href = "RankList.html";
         }, 500);
     }
     </script>

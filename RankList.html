@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8" />
+<title>員工評分排行榜</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.rank-no {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4f46e5;
+}
+.emp-score {
+    text-align: right;
+    font-size: 18px;
+    font-weight: bold;
+    color: #2563eb;
+}
+.detail {
+    font-size: 12px;
+    color: #666;
+}
+</style>
+</head>
+
+<body class="bg-gray-100">
+
+<!-- 頂部導覽列 -->
+<header class="sticky top-0 z-10 bg-white shadow-md py-3 border-b border-gray-200">
+  <div class="container mx-auto flex items-center justify-between px-4">
+    
+    <!-- Logo + 名稱 -->
+    <div class="flex items-center">
+        <button 
+                        onclick="showEmployeeList()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow transition duration-150">
+                        返回列表
+                    </button>
+      <img src="HongYipLogo.png" class="w-14 h-14 mr-3 object-contain">
+      <h1 class="text-xl font-bold text-indigo-700">員工評分系統</h1>
+    </div>
+
+    <!-- 返回按鈕 -->
+    <span class="text-lg font-medium text-gray-700">
+        當前評核人：
+        <span id="currentEvaluatorDisplay" class="font-bold text-indigo-600"></span>
+    </span>
+
+    <div class="flex gap-3 mt-3 md:mt-0">
+        <button onclick="Ranklist()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow">
+            排行榜
+        </button>
+        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow">
+            登出
+        </button>
+    </div>
+</header>
+
+<!-- 主內容 -->
+<main class="container mx-auto py-8 px-4">
+
+    <!-- 評核人 + 按鈕 -->
+   
+
+    <h2 class="text-2xl font-bold mb-4">🏆 員工評分排行榜</h2>
+
+    <div id="rankList">載入中...</div>
+
+</main>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycby46B_BO5E6cbIxYUngBCcT1Las-zSElgx6k1Kf057WH5_T0xrVQvm1IpmEhAtT47jl/exec";
+
+// ⭐ 返回 index.html
+function showEmployeeList() {
+    window.location.href = "index.html";
+}
+
+// ⭐ 登出
+function logout() {
+    localStorage.removeItem("currentEvaluator");
+    window.location.href = "login.html";
+}
+
+// ⭐ 前往排行榜（自己頁面，不過你有可能之後會改）
+function Ranklist() {
+    window.location.href = "RankList.html";
+}
+
+// ⭐ 讀取員工姓名對照表
+async function loadEmployeeMap() {
+    const res = await fetch(`${scriptURL}?action=getEmployeeList`);
+    const json = await res.json();
+
+    if (!json.success) return {};
+
+    const map = {};
+    json.data.forEach(emp => {
+        map[emp.員工編號] = emp.員工姓名;
+    });
+    return map;
+}
+
+// ⭐ 主流程
+document.addEventListener("DOMContentLoaded", async () => {
+    const evaluator = localStorage.getItem("currentEvaluator");
+
+    if (!evaluator) {
+        alert("請重新登入");
+        return (window.location.href = "login.html");
+    }
+
+    document.getElementById("currentEvaluatorDisplay").textContent = evaluator;
+
+    window.employeeMap = await loadEmployeeMap();
+    loadRankList(evaluator);
+});
+
+// ⭐ 取得所有評分
+async function loadRankList(evaluator) {
+    const url = `${scriptURL}?action=getAllEvaluatorRatings&evaluator=${encodeURIComponent(evaluator)}`;
+
+    try {
+        const response = await fetch(url);
+        const json = await response.json();
+
+        if (!json.success) {
+            document.getElementById("rankList").innerHTML =
+                `<div class="error">讀取失敗：${json.message}</div>`;
+            return;
+        }
+
+        const list = json.data;
+
+        const ranked = list.map(item => {
+            const id = item.員工編號;
+
+            return {
+                員工編號: id,
+                員工姓名: window.employeeMap[id] || "(未有姓名)",
+                tourTotal: item.tourTotal || 0,
+                interviewTotal: item.interviewTotal || 0,
+                total: (item.tourTotal || 0) + (item.interviewTotal || 0)
+            };
+        }).sort((a, b) => b.total - a.total);
+
+        renderRankList(ranked);
+
+    } catch (err) {
+        document.getElementById("rankList").innerHTML =
+            `<div class="error">發生錯誤：${err.message}</div>`;
+    }
+}
+
+// ⭐ 渲染排行榜
+function renderRankList(data) {
+    const container = document.getElementById("rankList");
+
+    container.innerHTML = data.map((emp, index) => `
+        <div class="rank-item">
+            <div class="rank-no">#${index + 1}</div>
+            <div>
+                <strong>${emp.員工姓名}</strong> (${emp.員工編號})
+            </div>
+            <div class="emp-score">
+                ${emp.total} 分
+                <div class="detail">
+                    考察團：${emp.tourTotal} ／ 會面：${emp.interviewTotal}
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+</script>
+
+</body>
+</html>
