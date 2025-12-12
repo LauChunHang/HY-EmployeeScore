@@ -31,7 +31,7 @@ body {
 
     #evaluatorSelect {
       width: 340px; /* 增大寬度 */
-      font-size: 18px; /* 增大字體 */
+      font-size: 50px; /* 增大字體 */
       padding: 12px; /* 增大內邊距 */
       height: 50px; /* 自動高度 */
       margin-bottom: 20px;
