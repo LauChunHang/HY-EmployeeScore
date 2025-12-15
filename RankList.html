@@ -169,11 +169,16 @@ function renderRankList(data) {
     const container = document.getElementById("rankList");
 
     container.innerHTML = data.map((emp, index) => `
-        <div class="rank-item">
+        <div class="rank-item cursor-pointer hover:bg-indigo-50 transition"
+             onclick="showEmployeeDetail('${emp.員工編號}')">
+
             <div class="rank-no">#${index + 1}</div>
+
             <div>
-                <strong>${emp.員工姓名}</strong> (${emp.員工編號})
+                <strong>${emp.員工姓名}</strong>
+                <div class="text-sm text-gray-500">(${emp.員工編號})</div>
             </div>
+
             <div class="emp-score">
                 ${emp.total} 分
                 <div class="detail">
@@ -183,6 +188,13 @@ function renderRankList(data) {
         </div>
     `).join("");
 }
+
+function goToEmployee(empId) {
+    // 跳去評分主頁，帶員工編號
+    window.location.href = `index.html?employeeId=${encodeURIComponent(empId)}`;
+}
+
+
 </script>
 
 </body>

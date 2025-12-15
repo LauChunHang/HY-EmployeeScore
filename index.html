@@ -140,24 +140,36 @@
 
     // check login
     document.addEventListener('DOMContentLoaded', function() {
-        const savedEvaluator = localStorage.getItem("currentEvaluator");
-        
-        if (!savedEvaluator) {
-            
-            window.location.href = "login.html";
-            return;
-        }
-        
-        // 設置當前評核人
-        currentEvaluator = savedEvaluator;
-        document.getElementById("currentEvaluatorDisplay").textContent = currentEvaluator;
-        
-        // 設置初始按鈕狀態 (在列表頁面時應該禁用)
-        updateReturnButtonState(true); 
-        
-        // 載入系統資料
-        loadAllData();
-    });
+    const savedEvaluator = localStorage.getItem("currentEvaluator");
+
+    if (!savedEvaluator) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    currentEvaluator = savedEvaluator;
+    document.getElementById("currentEvaluatorDisplay").textContent = currentEvaluator;
+
+    const params = new URLSearchParams(window.location.search);
+    const employeeIdFromURL = params.get("employeeId");
+
+    if (employeeIdFromURL) {
+        // ⭐ 重點：直接顯示該員工評分頁
+        updateReturnButtonState(false); // 啟用返回
+        showEmployeeDetail(employeeIdFromURL);
+    } else {
+        // ⭐ 沒有指定員工，才顯示列表
+        updateReturnButtonState(true);
+       loadAllData().then(() => {
+    const employeeId = getEmployeeIdFromURL();
+    if (employeeId) {
+        showEmployeeDetail(employeeId);
+    }
+});
+
+    }
+});
+
 
     // upload data from google sheet
     async function loadSheetData(sheetName) {
@@ -248,6 +260,7 @@
 
         displayEmployees(allEmployees);
         hideLoading();
+        return true;
     }
 
     // employee list (UPDATED)
@@ -440,6 +453,12 @@
             setupRatingSliders(ratingOptions, 'rating');
             setupRatingSliders(interviewRatingOptions, 'interview');
     }
+
+    function getEmployeeIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("employeeId");
+}
+
 
     
     // history
