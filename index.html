@@ -16,35 +16,37 @@
     <div id="customMessageBox" class="custom-message-box"></div>
     
     <!-- 頂部導覽列 (Sticky Header) -->
-   <header class="sticky top-0 z-10 bg-white shadow-md py-3 border-b border-gray-200">
-  <div class="container mx-auto flex items-center justify-between px-4">
-    
-    <!-- Logo + 名稱 -->
-    <div class="flex items-center">
-        <button 
-                        onclick="showEmployeeList()" 
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow transition duration-150">
-                        返回列表
-                    </button>
-      <img src="HongYipLogo.png" class="w-14 h-14 mr-3 object-contain">
+   <header class="sticky top-0 z-10 bg-white shadow-md border-b border-gray-200">
+  <div class="container mx-auto px-4 h-20 flex items-center justify-between">
+
+    <div class="flex items-center gap-3">
+      <button
+        onclick="showEmployeeList()"
+        class="h-10 px-4 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg shadow flex items-center">
+        返回列表
+      </button>
+
+      <img src="HongYipLogo.png" class="w-14 h-14 object-contain">
       <h1 class="text-xl font-bold text-indigo-700">員工評分系統</h1>
     </div>
 
-    <!-- 返回按鈕 -->
-    <span class="text-lg font-medium text-gray-700">
-        當前評核人：
-        <span id="currentEvaluatorDisplay" class="font-bold text-indigo-600"></span>
-    </span>
-
-    <div class="flex gap-3 mt-3 md:mt-0">
-        <button onclick="Ranklist()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow">
-            排行榜
-        </button>
-        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow">
-            登出
-        </button>
+    <div class="text-lg text-gray-700">
+      當前評核人：
+      <span id="currentEvaluatorDisplay" class="font-bold text-indigo-600"></span>
     </div>
+
+    <div class="flex gap-3 items-center">
+      <button onclick="Ranklist()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
+        排行榜
+      </button>
+      <button onclick="logout()" class="h-10 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow">
+        登出
+      </button>
+    </div>
+
+  </div>
 </header>
+
 
 
     <!-- 主內容區塊 -->
