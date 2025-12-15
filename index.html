@@ -406,7 +406,7 @@
                     <h3>📋 康業受僱記錄</h3>
                     ${employmentRecords.length > 0 ? employmentRecords.map(record => `
                         <div class="employment-record border-b pb-2 mb-2">
-                            <p><strong>期間：</strong>${record.由 || ''} - ${record.至 || ''}</p>
+                            <p><strong>期間：</strong>${record.由 || ''} - ${formatEndDate(record.至)}</p>
                             <p><strong>分區：</strong>${record.分區 || ''}</p>
                             <p><strong>大廈：</strong>${record.大廈 || ''}</p>
                             <p><strong>職位：</strong>${record.職位 || ''}</p>
@@ -453,6 +453,25 @@
             setupRatingSliders(ratingOptions, 'rating');
             setupRatingSliders(interviewRatingOptions, 'interview');
     }
+
+    function formatEndDate(endDate) {
+    if (!endDate) return '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    // 如果「至」是今天或未來 → 視為仍在職
+    if (!isNaN(end) && end >= today) {
+        return '現在';
+    }
+
+    // 正常顯示日期
+    return endDate;
+}
+
 
     function getEmployeeIdFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -607,7 +626,7 @@
                             
                             ${isLatest ? `
                             <p class="text-red-500 font-bold mt-3 text-sm border-t pt-2 border-red-200">
-                                *您再次提交評分，將會覆蓋此記錄。
+                                *如果您再次提交評分，將會覆蓋此記錄。
                             </p>
                             ` : ''}
                         </div>
