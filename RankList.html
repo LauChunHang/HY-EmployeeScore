@@ -49,13 +49,17 @@
       </button>
 
       <img src="HongYipLogo.png" class="w-14 h-14 object-contain">
-      <h1 class="text-xl font-bold text-indigo-700">員工評分系統</h1>
+      <h1 class="text-lg font-bold text-indigo-700">員工評分系統</h1>
     </div>
 
-    <div class="text-lg text-gray-700">
-      當前評核人：
-      <span id="currentEvaluatorDisplay" class="font-bold text-indigo-600"></span>
-    </div>
+   <div class="flex items-center max-w-[300px] overflow-hidden">
+  <span class="text-gray-700 text-sm whitespace-nowrap mr-1">當前評核人：</span>
+  <span
+    id="currentEvaluatorDisplay"
+    class="font-bold text-indigo-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+  </span>
+</div>
+
 
     <div class="flex gap-3 items-center">
       <button onclick="Ranklist()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow">
@@ -68,7 +72,6 @@
 
   </div>
 </header>
-
 
 <!-- 主內容 -->
 <main class="container mx-auto py-8 px-4">
