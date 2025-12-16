@@ -450,7 +450,6 @@
                     <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
                     <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
                     <div class="total-score" id="ratingTotalScore">考總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
-                    <!-- REMOVED: <button class="submit-button" onclick="submitEvaluation('${SHEETS.TOUR_SCORE}', ratingOptions, 'rating')">提交考察團評分</button> -->
                 </div>
 
                 <!-- 會面評分表單 -->
@@ -460,7 +459,6 @@
                     <div id="interviewRatingItemsContainer">${generateRatingItems(interviewRatingOptions, 'interview')}</div>
                     <div class="score-breakdown" id="interviewScoreBreakdown">${generateScoreBreakdown(interviewRatingOptions, 'interview')}</div>
                     <div class="total-score" id="interviewTotalScore">總分: 0 / ${calculateMaxScore(interviewRatingOptions)}</div>
-                    <!-- REMOVED: <button class="submit-button" onclick="submitEvaluation('${SHEETS.INTERVIEW_SCORE}', interviewRatingOptions, 'interview')">提交會面評分</button> -->
                 </div>
                 
                 <!-- NEW: Combined Submission Button -->
@@ -468,10 +466,7 @@
                     <button class="submit-button" id="submitAllButton" onclick="submitAllEvaluations()">
                         提交評分 (考察團 & 會面)
                     </button>
-                    <button class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow hidden" 
-            id="unlockButton" onclick="unlockAllSliders()">
-        🔓 
-    </button>
+                   
                 </div>
             `;
 
@@ -507,7 +502,7 @@
 
     
     // history
-    let isSlidersLocked = false;
+    
 
 // 修改：載入歷史評分後，自動設定滑桿位置
 async function loadHistoryRatings(employeeId, evaluator) {
@@ -538,6 +533,7 @@ async function loadHistoryRatings(employeeId, evaluator) {
         // 更新總分顯示
         updateTotalScore(ratingOptions, 'rating');
         updateTotalScore(interviewRatingOptions, 'interview');
+        
 
         // 渲染歷史記錄
         const tourTotalSum = calculateRecordsTotalSum(tour);
@@ -560,43 +556,37 @@ function setSlidersToLatest(latestRecord, options, prefix) {
     options.forEach((option, index) => {
         const slider = document.getElementById(`${prefix}-rating-${index}`);
         const display = document.getElementById(`${prefix}-value-${index}`);
+        const lockBtn = document.getElementById(`${prefix}-lock-${index}`);
+
         if (!slider || !display) return;
 
         const savedScore = latestRecord[option.評分項目];
+
         if (savedScore !== undefined && savedScore !== '') {
             slider.value = savedScore;
             display.textContent = savedScore;
+
+            // 🔒 有歷史 → 鎖住 + 顯示鎖
+            slider.disabled = true;
+            slider.classList.add('opacity-50', 'cursor-not-allowed');
+
+            lockBtn?.classList.remove('hidden');
+            lockBtn.textContent = '🔒';
+
         } else {
-            // 若無歷史，保持最低分
+            // 🆕 沒歷史 → 不鎖、不顯示
+            slider.disabled = false;
             slider.value = option.最低分;
             display.textContent = option.最低分;
+
+            
         }
     });
 }
 
-// 新增：鎖定所有滑桿
-function lockAllSliders() {
-    document.querySelectorAll('.rating-slider').forEach(slider => {
-        slider.disabled = true;
-        slider.classList.add('opacity-50', 'cursor-not-allowed');
-    });
-    isSlidersLocked = true;
-    // 隱藏提交按鈕，顯示解鎖按鈕
-    document.getElementById('submitAllButton').style.display = 'none';
-    document.getElementById('unlockButton').style.display = 'inline-block';
-}
 
-// 新增：解鎖所有滑桿
-function unlockAllSliders() {
-    document.querySelectorAll('.rating-slider').forEach(slider => {
-        slider.disabled = false;
-        slider.classList.remove('opacity-50', 'cursor-not-allowed');
-    });
-    isSlidersLocked = false;
-    document.getElementById('submitAllButton').style.display = 'inline-block';
-    document.getElementById('unlockButton').style.display = 'none';
-    showCustomMessage('已解鎖，可重新編輯評分', 'info');
-}
+// 新增：鎖定所有滑桿
+
     
     // Helper function to render the combined history view
     
@@ -716,16 +706,76 @@ function unlockAllSliders() {
     }
 
     // 生成評分滑桿
-    function generateRatingItems(options, prefix) {
-        return options.map((option, index) => `
-            <div class="rating-item">
-                <div class="rating-header"><span class="rating-title">${option.評分項目}</span></div>
-                <div class="rating-range text-xs text-gray-500">評分範圍: ${option.最低分} - ${option.最高分}分</div>
-                <input type="range" class="rating-slider" id="${prefix}-rating-${index}" min="${option.最低分}" max="${option.最高分}" value="${option.最低分}" step="1">
-                <div class="rating-value-display" id="${prefix}-value-${index}">${option.最低分}</div>
+   function generateRatingItems(options, prefix) {
+    return options.map((option, index) => `
+        <div class="rating-item mb-5">
+
+            <!-- 標題 -->
+            <div class="rating-header mb-1">
+                <span class="rating-title font-medium text-gray-800">
+                    ${option.評分項目}
+                </span>
+                <span class="text-xs text-gray-500 ml-2">
+                    (${option.最低分} - ${option.最高分})
+                </span>
             </div>
-        `).join('');
+
+            <!-- 🔥 拉桿 + 分數 + 鎖（同一行） -->
+            <div class="flex items-center gap-3">
+
+                <!-- 拉桿（固定比例） -->
+                <input 
+                    type="range"
+                    class="rating-slider flex-1"
+                    id="${prefix}-rating-${index}"
+                    min="${option.最低分}"
+                    max="${option.最高分}"
+                    value="${option.最低分}"
+                    step="1"
+                >
+
+                <!-- 分數（固定寬度） -->
+                <div 
+                    class="rating-value-display w-10 text-center font-semibold text-indigo-600"
+                    id="${prefix}-value-${index}">
+                    ${option.最低分}
+                </div>
+
+                <!-- 鎖（固定寬度） -->
+                <button
+                    class="lock-btn hidden w-8 text-xl text-center"
+                    id="${prefix}-lock-${index}"
+                    onclick="toggleSliderLock('${prefix}', ${index})"
+                    title="解鎖此評分"
+                >
+                    🔒
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+
+function toggleSliderLock(prefix, index) {
+    const slider = document.getElementById(`${prefix}-rating-${index}`);
+    const lockBtn = document.getElementById(`${prefix}-lock-${index}`);
+
+    if (!slider) return;
+
+    const locked = slider.disabled;
+
+    slider.disabled = !locked;
+
+    if (slider.disabled) {
+        slider.classList.add('opacity-50', 'cursor-not-allowed');
+        lockBtn.textContent = '🔒';
+    } else {
+        slider.classList.remove('opacity-50', 'cursor-not-allowed');
+        lockBtn.textContent = '🔓';
     }
+}
+
+
 
     // 生成分數明細
     function generateScoreBreakdown(options, prefix) {
