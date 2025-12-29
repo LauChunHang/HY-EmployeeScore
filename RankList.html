@@ -58,31 +58,25 @@ body {
     <div class="flex items-center gap-3">
       <button
         onclick="showEmployeeList()"
-        class="h-10 px-4 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg shadow flex items-center text-sm transition duration-150">
+        class="h-10 px-4 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg shadow flex items-center text-sm">
         返回列表
       </button>
 
       <img src="HongYipLogo.png" class="w-14 h-14 object-contain">
-      <h1 class="text-sm font-bold text-indigo-700">員工評分系統</h1>
+      <h1 class="text-lg font-bold text-indigo-700">員工評分系統</h1>
     </div>
 
-    <div class="flex items-center max-w-[300px] overflow-hidden">
-      <span class="text-gray-700 text-sm whitespace-nowrap mr-1">當前評核人：</span>
-      <span
-        id="currentEvaluatorDisplay"
-        class="font-bold text-indigo-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-        載入中...
-      </span>
-    </div>
+   
 
-    <div class="flex gap-3 items-center">
-      <button onclick="Ranklist()" class="h-10 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow text-sm flex items-center justify-center space-x-1 transition duration-150">
-        
-        <span>排行榜</span>
+
+   <div class="flex gap-3 items-center flex-shrink-0">
+      <button onclick="Ranklist()" 
+              class="h-10 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow text-sm">
+        排行榜
       </button>
-      <button onclick="logout()" class="h-10 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow text-sm flex items-center justify-center space-x-1 transition duration-150">
-        
-        <span>登出</span>
+      <button onclick="logout()" 
+              class="h-10 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow text-sm">
+        登出
       </button>
     </div>
 
@@ -90,7 +84,16 @@ body {
 </header>
 
 <!-- 主內容 -->
+ 
 <main class="container mx-auto py-8 px-4 max-w-3xl">
+
+     <div class="flex items-center max-w-[300px] overflow-hidden">
+  <span class="text-gray-700 text-sm whitespace-nowrap mr-1">當前評核人：</span>
+  <span
+    id="currentEvaluatorDisplay"
+    class="font-bold text-indigo-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+  </span>
+</div>
 
   <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">🏆 員工評分排行榜</h2>
 
@@ -108,8 +111,19 @@ function showEmployeeList() {
 
 // 登出
 function logout() {
-    localStorage.removeItem("currentEvaluator");
-    window.location.href = "login.html";
+    // 彈出確認對話框
+    const confirmed = confirm("您確定要登出嗎？\n登出後將返回登入頁面。");
+
+    if (confirmed) {
+        // 用戶點擊「確定」
+        showCustomMessage('已登出', 'info');
+        localStorage.removeItem("currentEvaluator");
+        
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 500);
+    }
+    // 如果用戶點擊「取消」，什麼都不做，直接返回
 }
 
 // 已在此頁，不需跳轉
