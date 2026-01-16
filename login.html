@@ -18,8 +18,9 @@
     <div id="loginError" class="error"></div>
   </div>
   <script>
-    const SPREADSHEET_ID = '1znQ2MapAc4fqXJc3SDxoixbrd-b6Xry4auf8vFIcqDc';
-    const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0';
+    const SPREADSHEET_ID = '1ouVpIPhmsNShN7SYkMGBkd0W6bO9fiKf4WBlzmCU9p4';
+    // 由於我們使用 App Script 代理寫入，Sheets API Key 可能只用於讀取（如果有的話），這裡保留
+    const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0'; 
     const EVALUATORS_SHEET = '評核人名單';
     let evaluatorList = [];
     // 從Google Sheets直接讀取評核人名單
