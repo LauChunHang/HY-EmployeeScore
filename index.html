@@ -260,11 +260,7 @@
         evaluatorList = evaluators.map(e => e.評核人姓名 || e.評核人);
 
         // 考察團評分選項
-        ratingOptions = ratings.map(row => ({
-            '評分項目': row['評分項目'] || '未命名',
-            '最低分': parseInt(row['最低分']) || 0,
-            '最高分': parseInt(row['最高分']) || 5
-        }));
+       
 
         // 會面評分選項
         interviewRatingOptions = interviewRatings.map(row => ({
@@ -284,6 +280,8 @@
         hideLoading();
         handleHash();
         return true;
+
+        
     }
     window.addEventListener('hashchange', handleHash);
 
@@ -317,10 +315,7 @@
                         <p><strong>職位：</strong>${emp.職位 || '未填寫'}</p>
                     </div>
                     <div class="rating-summary mt-3 pt-3 border-t border-gray-200">
-                        <div class="flex justify-between items-center text-sm mb-1">
-                            <span class="font-medium text-gray-500">考察團評分:</span>
-                            ${tourScoreDisplay}
-                        </div>
+                        
                         <div class="flex justify-between items-center text-sm">
                             <span class="font-medium text-gray-500">會面評分:</span>
                             ${interviewScoreDisplay}
@@ -350,6 +345,8 @@
         // 確保這裡有定義 loadHistoryRatings 函式並正確使用
         loadHistoryRatings(employeeId, currentEvaluator); 
     }
+
+    
 
     function displayAllInfo() {
         const content = document.getElementById('basicContent');
@@ -445,14 +442,6 @@
                     <div id="historyRatingsContainer">正在載入您的歷史記錄...</div>
                 </div>
                 
-                <!-- 考察團評分表單 -->
-                <div class="evaluation-form">
-                    <h3>📝 考察團整體評分</h3>
-                    <div class="evaluator-display text-lg font-medium mb-4 text-gray-600">評核人：${currentEvaluator}</div>
-                    <div id="ratingItemsContainer">${generateRatingItems(ratingOptions, 'rating')}</div>
-                    <div class="score-breakdown" id="ratingScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'rating')}</div>
-                    <div class="total-score" id="ratingTotalScore">考總分: 0 / ${calculateMaxScore(ratingOptions)}</div>
-                </div>
 
                 <!-- 會面評分表單 -->
                 <div class="interview-form">
@@ -473,8 +462,15 @@
             `;
 
             // 綁定評分滑桿事件
-            setupRatingSliders(ratingOptions, 'rating');
+            
             setupRatingSliders(interviewRatingOptions, 'interview');
+            // 在 displayAllInfo() 最後
+setTimeout(() => {
+    if (currentEmployee && currentEvaluator) {
+        loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
+    }
+}, 0);
+
     }
 
     function formatEndDate(endDate) {
@@ -515,39 +511,60 @@ async function loadHistoryRatings(employeeId, evaluator) {
 
     try {
         const url = `${scriptURL}?action=getRatings&employeeId=${encodeURIComponent(employeeId)}&evaluator=${encodeURIComponent(evaluator)}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("網絡錯誤");
+        console.log("發送請求到:", url); // ← 加這行看 console 確認 URL 正確
+
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',           // 改成 cors（預設即可，但明確寫）
+            credentials: 'omit'     // 避免 cookie 問題
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP 錯誤 ${response.status}`);
+        }
 
         const result = await response.json();
+        console.log("後端回傳:", result); // ← 加這行看 console 是否有資料
+
         if (!result.success || !result.data) {
             container.innerHTML = '<div class="no-data text-center p-5 bg-gray-100 rounded-lg text-gray-500">無相關歷史評分記錄。</div>';
             return;
         }
 
-        const { tour, interview } = result.data;
-        const latestTour = tour[0] || {};
-        const latestInterview = interview[0] || {};
+        // 在 try 區塊裡，解析 result 後加上這段
+const { tour = [], interview = [] } = result.data || {};  // 預設 tour 為空陣列
 
-        // === 關鍵：設定滑桿到上次評分 ===
-        setSlidersToLatest(latestTour, ratingOptions, 'rating');
-        setSlidersToLatest(latestInterview, interviewRatingOptions, 'interview');
+const latestTour = tour[0] || {};
+const latestInterview = interview.length > 0 ? interview[0] : null;
 
-        // 更新總分顯示
-        updateTotalScore(ratingOptions, 'rating');
-        updateTotalScore(interviewRatingOptions, 'interview');
-        
+if (latestInterview) {
+  setSlidersToLatest(latestInterview, interviewRatingOptions, 'interview');
+  updateTotalScore(interviewRatingOptions, 'interview');
+}
 
-        // 渲染歷史記錄
-        const tourTotalSum = calculateRecordsTotalSum(tour);
-        const interviewTotalSum = calculateRecordsTotalSum(interview);
-        const combinedTotalSum = tourTotalSum + interviewTotalSum;
-        container.innerHTML = renderCombinedHistory(result.data, tourTotalSum, interviewTotalSum, combinedTotalSum);
 
+// 計算總和（tour 強制 0）
+const tourTotalSum = calculateRecordsTotalSum(tour); // 會是 0
+const interviewTotalSum = calculateRecordsTotalSum(interview);
+const combinedTotalSum = tourTotalSum + interviewTotalSum;
+
+// 渲染（只顯示會面歷史）
+container.innerHTML = renderCombinedHistory(
+  { tour, interview }, 
+  tourTotalSum, 
+  interviewTotalSum, 
+  combinedTotalSum
+);
     } catch (error) {
-        console.error("載入歷史評分失敗:", error);
+        console.error("載入歷史失敗:", error);
         container.innerHTML = `
             <div class="no-data text-center p-5 border border-red-400 bg-red-100 text-red-700 rounded-lg">
-                無法載入歷史記錄<br><small>錯誤: ${error.message}</small>
+                無法載入歷史記錄<br>
+                <small>錯誤: ${error.message}</small><br>
+                <button onclick="loadHistoryRatings('${employeeId}', '${evaluator}')" 
+                        class="mt-3 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    重新載入
+                </button>
             </div>
         `;
     }
@@ -598,7 +615,7 @@ function setSlidersToLatest(latestRecord, options, prefix) {
         if (records.length === 0) {
             return `
                 <div class="mb-6 p-4 border-l-4 rounded-lg shadow-inner" style="border-left-color: ${color}; background-color: ${color}10;">
-                    <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title} (0 條記錄)</h4>
+                    <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title} </h4>
                     <!-- 🏆 累積總分顯示 -->
                     <div class="p-4 mb-4 bg-white rounded-xl shadow-lg text-center border-b-4 border-indigo-400">
                         <h5 class="text-lg font-semibold text-gray-700">該類別所有紀錄累積單項分數總和：</h5>
@@ -618,7 +635,7 @@ function setSlidersToLatest(latestRecord, options, prefix) {
         
         return `
             <div class="mb-6 p-4 border-l-4 rounded-lg shadow-inner" style="border-left-color: ${color}; background-color: ${color}10;">
-                <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title} (${records.length} 條記錄)</h4>
+                <h4 class="text-xl font-bold mb-4" style="color: ${color};">${title}</h4>
                 
                 
                 
@@ -669,31 +686,30 @@ function setSlidersToLatest(latestRecord, options, prefix) {
     }
 
     function renderCombinedHistory(allHistory, tourTotalSum, interviewTotalSum, combinedTotalSum) {
-        let combinedTotalHtml = '';
-        if (combinedTotalSum > 0) {
-            combinedTotalHtml = `
-                <div class="p-6 mb-8 rounded-xl shadow-2xl text-center  border-4 ">
-                    <h5 class="text-xl font-bold text-gray-800 mb-2">總分 (考察團 + 會面)</h5>
-                    <p class="text-6xl font-black text-red-600 mt-1">${combinedTotalSum.toFixed(1)}</p>
-                    <p class="text-sm text-gray-600 mt-2">
-                        考察團累積總和: ${tourTotalSum.toFixed(1)} + 會面累積總和: ${interviewTotalSum.toFixed(1)}
-                    </p>
-                </div>
-            `;
-        } else {
-            combinedTotalHtml = `
-                <div class="p-4 mb-4 bg-gray-100 rounded-lg text-gray-500 text-center">
-                    無歷史評分數據累積。
-                </div>
-            `;
-        }
-        
-        return `
-            ${combinedTotalHtml}
-            ${renderHistorySection(allHistory.tour, '考察團評分紀錄', '#004d99', tourTotalSum)}
-            ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#004d99', interviewTotalSum)}
+    let combinedTotalHtml = '';
+    if (combinedTotalSum > 0) {
+        combinedTotalHtml = `
+            <div class="p-6 mb-8 rounded-xl shadow-2xl text-center border-4 border-blue-400">
+                <h5 class="text-xl font-bold text-gray-800 mb-2">會面總分</h5>
+                <p class="text-6xl font-black text-blue-600 mt-1">${combinedTotalSum.toFixed(1)}</p>
+                <p class="text-sm text-gray-600 mt-2">
+                    會面累積總和: ${interviewTotalSum.toFixed(1)}
+                </p>
+            </div>
+        `;
+    } else {
+        combinedTotalHtml = `
+            <div class="p-4 mb-4 bg-gray-100 rounded-lg text-gray-500 text-center">
+                無會面評分歷史數據。
+            </div>
         `;
     }
+    
+    return `
+        ${combinedTotalHtml}
+        ${renderHistorySection(allHistory.interview, '會面評分紀錄', '#004d99', interviewTotalSum)}
+    `;
+}
 
      function calculateRecordsTotalSum(records) {
         if (!Array.isArray(records)) {
@@ -872,51 +888,42 @@ function toggleSliderLock(prefix, index) {
 
     // NEW: Combined function to submit both evaluations
     async function submitAllEvaluations() {
-        const button = document.getElementById('submitAllButton');
-        if (!currentEvaluator || !currentEmployee) {
-            showCustomMessage('請先登入並選擇員工', 'error');
-            return;
-        }
-
-        const originalButtonText = button.textContent;
-        
-        try {
-            // 1. 禁用按鈕並顯示載入狀態
-            button.disabled = true;
-            button.textContent = '處理中... 請勿關閉';
-            showCustomMessage('開始提交所有評分...', 'info');
-
-            // 2. 準備數據
-            const tourData = prepareEvaluationData(ratingOptions, 'rating');
-            const interviewData = prepareEvaluationData(interviewRatingOptions, 'interview');
-
-            // 3. 執行平行提交
-            const [tourResult, interviewResult] = await Promise.all([
-                submitEvaluationSingle(SHEETS.TOUR_SCORE, tourData),
-                submitEvaluationSingle(SHEETS.INTERVIEW_SCORE, interviewData)
-            ]);
-
-            // 4. 顯示成功訊息
-            showCustomMessage(`考察團評分 (${tourResult.total} 分) 和 會面評分 (${interviewResult.total} 分) 已成功提交！`, 'success');
-
-            
-            // 5. 延遲後更新歷史記錄和列表 (給 App Script 寫入時間)
-            setTimeout(() => {
-                loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
-                loadAllData(); // 更新員工列表上的總分摘要
-            }, 3000); // 延遲 3 秒，確保 Google App Script 處理完成
-
-        } catch (error) {
-            console.error("提交所有評分失敗:", error);
-            showCustomMessage(`提交失敗，請檢查網絡或App Script狀態。錯誤: ${error.message}`, 'error');
-        } finally {
-            // 6. 恢復按鈕狀態
-             setTimeout(() => {
-                button.disabled = false;
-                button.textContent = originalButtonText;
-            }, 3500); // 確保在數據更新完成後恢復按鈕
-        }
+    const button = document.getElementById('submitAllButton');
+    if (!currentEvaluator || !currentEmployee) {
+        showCustomMessage('請先登入並選擇員工', 'error');
+        return;
     }
+
+    const originalButtonText = button.textContent;
+    
+    try {
+        button.disabled = true;
+        button.textContent = '處理中... 請勿關閉';
+        showCustomMessage('開始提交會面評分...', 'info');
+
+        const interviewData = prepareEvaluationData(interviewRatingOptions, 'interview');
+
+        const interviewResult = await submitEvaluationSingle(SHEETS.INTERVIEW_SCORE, interviewData);
+
+        showCustomMessage(`會面評分 (${interviewResult.total} 分) 已成功提交！`, 'success');
+
+        
+
+    } catch (error) {
+        console.error("提交會面評分失敗:", error);
+        showCustomMessage(`提交失敗：${error.message}`, 'error');
+    } finally {
+        setTimeout(() => {
+            button.disabled = false;
+            button.textContent = originalButtonText;
+        }, 3500);
+    }
+    setTimeout(() => {
+    loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
+-   loadAllData();
+}, 3000);
+
+}
 
 
     // 返回員工列表
