@@ -181,7 +181,7 @@ async function loadRankList(evaluator) {
         if (!json.success || !json.data || json.data.length === 0) {
             container.innerHTML = `
                 <div class="p-10 text-center bg-white rounded-lg shadow border">
-                    <p class="text-gray-500 text-lg">尚未有任何評分記錄</p>
+                    <p class="text-gray-500 text-lg">尚未有任何評分紀錄</p>
                 </div>`;
             return;
         }

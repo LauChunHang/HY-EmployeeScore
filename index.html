@@ -85,7 +85,7 @@
         BASIC: '員工資料',
         EDUCATION: '學歷／專業資格',
         EXPERIENCE: '工作經驗',
-        EMPLOYMENT: '康業受僱記錄',
+        EMPLOYMENT: '康業受僱紀錄',
         RATING: '考察團評分選項',
         INTERVIEW_RATING: '會面評分選項',
         EVALUATORS: '評核人名單',
@@ -370,7 +370,7 @@
                             <p><strong>學院名稱：</strong>${record.學院名稱 || ''}</p>
                             <p><strong>所獲證書/資格：</strong>${record.所獲證書資格 || ''}</p>
                         </div>
-                    `).join('') : '<div class="no-data text-gray-500">沒有學歷資格記錄</div>'}
+                    `).join('') : '<div class="no-data text-gray-500">沒有學歷資格紀錄</div>'}
                 </div>
                 <div class="detail-section">
                     <h3>🏢 工作經驗</h3>
@@ -381,10 +381,10 @@
                             <p><strong>離職時職位：</strong>${record.離職時職位 || ''}</p>
                             <p><strong>該工作年資：</strong>${record.該職位年資 || ''}</p>
                         </div>
-                    `).join('') : '<div class="no-data text-gray-500">沒有工作經驗記錄</div>'}
+                    `).join('') : '<div class="no-data text-gray-500">沒有工作經驗紀錄</div>'}
                 </div>
                 <div class="detail-section">
-                    <h3>📋 康業受僱記錄</h3>
+                    <h3>📋 康業受僱紀錄</h3>
                     ${employmentRecords.length > 0 ? employmentRecords.map(record => `
                         <div class="employment-record border-b pb-2 mb-2">
                             <p><strong>期間：</strong>${record.由 || ''} - ${formatEndDate(record.至)}</p>
@@ -393,12 +393,12 @@
                             <p><strong>職位：</strong>${record.職位 || ''}</p>
                             <p><strong>年資：</strong>${record.年資 || ''}</p>
                         </div>
-                    `).join('') : '<div class="no-data text-gray-500">沒有受僱記錄</div>'}
+                    `).join('') : '<div class="no-data text-gray-500">沒有受僱紀錄</div>'}
                 </div>
-                <!-- 歷史評分記錄區塊 -->
+                <!-- 歷史評分紀錄區塊 -->
                 <div class="detail-section mt-8">
-                    <h3>📜 上次評分記錄 (${currentEvaluator} 的評分)</h3>
-                    <div id="historyRatingsContainer">正在載入您的歷史記錄...</div>
+                    <h3>📜 上次評分紀錄 (${currentEvaluator} 的評分)</h3>
+                    <div id="historyRatingsContainer">正在載入您的歷史紀錄...</div>
                 </div>
                
                 <!-- 會面評分表單 -->
@@ -466,6 +466,7 @@ setTimeout(() => {
     
 
 // 修改：載入歷史評分後，自動設定滑桿位置
+// 修改：載入歷史評分後，自動設定滑桿位置 + 評語
 async function loadHistoryRatings(employeeId, evaluator) {
     const container = document.getElementById('historyRatingsContainer');
     if (!container) return;
@@ -478,8 +479,8 @@ async function loadHistoryRatings(employeeId, evaluator) {
 
         const response = await fetch(url, {
             method: 'GET',
-            mode: 'cors',           // 改成 cors（預設即可，但明確寫）
-            credentials: 'omit'     // 避免 cookie 問題
+            mode: 'cors',
+            credentials: 'omit'
         });
 
         if (!response.ok) {
@@ -494,30 +495,34 @@ async function loadHistoryRatings(employeeId, evaluator) {
             return;
         }
 
-        // 在 try 區塊裡，解析 result 後加上這段
-const { tour = [], interview = [] } = result.data || {};  // 預設 tour 為空陣列
+        const { tour = [], interview = [] } = result.data || {};
 
-const latestTour = tour[0] || {};
-const latestInterview = interview.length > 0 ? interview[0] : null;
+        const latestTour = tour[0] || {};
+        const latestInterview = interview.length > 0 ? interview[0] : null;
 
-if (latestInterview) {
-  setSlidersToLatest(latestInterview, interviewRatingOptions, 'interview');
-  updateTotalScore(interviewRatingOptions, 'interview');
-}
+        if (latestInterview) {
+            setSlidersToLatest(latestInterview, interviewRatingOptions, 'interview');
+            updateTotalScore(interviewRatingOptions, 'interview');
 
+            // ⭐ 新增：自動填入上次評語
+            const savedComment = latestInterview['評語'] || latestInterview['評語 (會面)'] || ''; // 確認欄位名，如果不同可調整
+            const commentTextarea = document.getElementById('interview-comment');
+            if (commentTextarea) {
+                commentTextarea.value = savedComment;
+            }
+        }
 
-// 計算總和（tour 強制 0）
-const tourTotalSum = calculateRecordsTotalSum(tour); // 會是 0
-const interviewTotalSum = calculateRecordsTotalSum(interview);
-const combinedTotalSum = tourTotalSum + interviewTotalSum;
+        const tourTotalSum = calculateRecordsTotalSum(tour);
+        const interviewTotalSum = calculateRecordsTotalSum(interview);
+        const combinedTotalSum = tourTotalSum + interviewTotalSum;
 
-// 渲染（只顯示會面歷史）
-container.innerHTML = renderCombinedHistory(
-  { tour, interview }, 
-  tourTotalSum, 
-  interviewTotalSum, 
-  combinedTotalSum
-);
+        container.innerHTML = renderCombinedHistory(
+            { tour, interview },
+            tourTotalSum,
+            interviewTotalSum,
+            combinedTotalSum
+        );
+
     } catch (error) {
         console.error("載入歷史失敗:", error);
         container.innerHTML = `
@@ -671,6 +676,7 @@ function setSlidersToLatest(latestRecord, options, prefix) {
     }
     // 生成評分滑桿
    function generateRatingItems(options, prefix) {
+    
     return options.map((option, index) => `
         <div class="rating-item mb-5">
             <!-- 標題 -->
@@ -736,6 +742,15 @@ function toggleSliderLock(prefix, index) {
             </div>
         `).join('');
     }
+
+    let ratingDescriptions = {};
+
+async function loadRatingDescriptions() {
+  const res = await fetch(`${scriptURL}?action=getRatingDescriptions`);
+  const json = await res.json();
+  ratingDescriptions = json.data || {};
+}
+
     // 計算最大可能分數
     function calculateMaxScore(options) {
         return options.reduce((total, option) => total + option.最高分, 0);
