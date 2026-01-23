@@ -283,7 +283,7 @@
                         : '<span class="text-red-500">未評分</span>';
                     return `
                         <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
-                            <h3 class="text-xl font-bold text-[#004d99] mb-2">${emp.員工姓名 || '無姓名'} (${emp.英文名})</h3>
+                            <h3 class="text-xl font-bold text-[#004d99] mb-2">${emp.員工姓名 || '無姓名'}</h3>
                             <div class="employee-info text-sm text-gray-700">
                                 <p><strong>部門：</strong>${emp.部門 || '未填寫'}</p>
                                 <p><strong>職位：</strong>${emp.職位 || '未填寫'}</p>
@@ -336,7 +336,7 @@
                     : `<div class="w-32 h-48 flex items-center justify-center bg-gray-200 rounded-lg text-gray-500 shadow-xl text-3xl font-semibold mb-4">${(employee.員工姓名 || '無').substring(0, 2)}</div>`;
                 content.innerHTML = `
                     <div class="detail-section">
-                        <h3>👤 基本資料 - ${employee.員工姓名}${employee.英文名 ? ` (${employee.英文名})` : ''}</h3>
+                        <h3>👤 基本資料 - ${employee.員工姓名} : ''}</h3>
 
                         <div class="grid grid-cols-2 lg:grid-cols-3 gap-6">
                             <!-- 員工照片欄位 (左側) - 增加 flex flex-col items-center 讓固定尺寸的直長方形照片居中 -->
