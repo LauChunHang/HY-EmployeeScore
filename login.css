@@ -36,6 +36,17 @@ body {
       height: 50px; /* 自動高度 */
       margin-bottom: 20px;
     }
+
+    #passwordInput {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
     
     button {
       width: 100%;

@@ -12,18 +12,26 @@
     <select id="evaluatorSelect">
       <option value="" disabled selected>請選擇評核人</option>
     </select>
-    <br>
-   
+    <input 
+      type="password" 
+      id="passwordInput" 
+      placeholder="請輸入密碼"
+      onkeydown="handleEnterKey(event)"
+    >
+
     <button onclick="login()">登入</button>
-    <div id="loginError" class="error"></div>
+    <div id="loginError" class="error" style="color: red; margin-top: 10px;"></div>
+    <br>
   </div>
+
   <script>
     const SPREADSHEET_ID = '1ouVpIPhmsNShN7SYkMGBkd0W6bO9fiKf4WBlzmCU9p4';
-    // 由於我們使用 App Script 代理寫入，Sheets API Key 可能只用於讀取（如果有的話），這裡保留
     const API_KEY = 'AIzaSyDj2ktQ36AoBSrYxPj_R4USvzvLtfh8Kb0'; 
     const EVALUATORS_SHEET = '評核人名單';
+    const COMMON_PASSWORD = "123456";
     let evaluatorList = [];
-    // 從Google Sheets直接讀取評核人名單
+
+    // 從 Google Sheets 讀取評核人名單
     async function loadEvaluators() {
       try {
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(EVALUATORS_SHEET)}?key=${API_KEY}`;
@@ -32,11 +40,8 @@
         const data = await response.json();
        
         if (data.values && data.values.length > 1) {
-          // 第一行是標題，從第二行開始是數據
-          evaluatorList = data.values.slice(1).map(row => row[0]); // 假設姓名在第一列
-          console.log("載入評核人名單成功:", evaluatorList);
+          evaluatorList = data.values.slice(1).map(row => row[0]); 
           
-          // 填充下拉選單
           const select = document.getElementById('evaluatorSelect');
           evaluatorList.forEach(name => {
             const option = document.createElement('option');
@@ -52,46 +57,62 @@
         document.getElementById('loginError').textContent = '無法載入評核人名單';
       }
     }
-    // 處理Enter鍵
+
+    // 修正後的單一登入函數
+    function login() {
+      const select = document.getElementById('evaluatorSelect');
+      const passwordInput = document.getElementById('passwordInput');
+      const name = select.value.trim();
+      const password = passwordInput.value.trim();
+      const errorDiv = document.getElementById('loginError');
+
+      errorDiv.textContent = '';
+
+      // 1. 檢查是否選擇了評核人
+      if (!name) {
+        errorDiv.textContent = '請選擇評核人';
+        return;
+      }
+
+      // 2. 檢查是否輸入了密碼
+      if (!password) {
+        errorDiv.textContent = '請輸入密碼';
+        return;
+      }
+
+      // 3. 檢查密碼是否正確
+      if (password !== COMMON_PASSWORD) {
+        errorDiv.textContent = '密碼錯誤';
+        return;
+      }
+
+      // 4. 檢查名單是否已載入
+      if (evaluatorList.length === 0) {
+        errorDiv.textContent = '名單尚未載入，請稍後再試';
+        return;
+      }
+
+      // 5. 驗證身份並執行登入
+      const actualName = evaluatorList.find(evaluator =>
+        evaluator.toLowerCase() === name.toLowerCase()
+      );
+
+      if (actualName) {
+        localStorage.setItem("currentEvaluator", actualName);
+        localStorage.setItem("isLoggedIn", "true");
+        window.location.href = "index.html";
+      } else {
+        errorDiv.textContent = '姓名不存在，無法登入';
+      }
+    }
+
+    // 處理 Enter 鍵
     function handleEnterKey(event) {
       if (event.key === 'Enter') {
         login();
       }
     }
-    function login() {
-      const select = document.getElementById('evaluatorSelect');
-      const name = select.value.trim();
-      const errorDiv = document.getElementById('loginError');
-     
-      if (!name) {
-        errorDiv.textContent = '請選擇姓名';
-        return;
-      }
-     
-      if (evaluatorList.length === 0) {
-        errorDiv.textContent = '名單尚未載入，請稍後再試';
-        return;
-      }
-     
-      // 檢查姓名是否存在（不區分大小寫）
-      const isValid = evaluatorList.some(evaluator =>
-        evaluator.toLowerCase() === name.toLowerCase()
-      );
-     
-      if (!isValid) {
-        errorDiv.textContent = '姓名不存在，無法登入';
-        return;
-      }
-     
-      // 存到 localStorage（儲存原始姓名）
-      const actualName = evaluatorList.find(evaluator =>
-        evaluator.toLowerCase() === name.toLowerCase()
-      );
-     
-      localStorage.setItem("currentEvaluator", actualName);
-      // 跳轉到主頁
-      window.location.href = "index.html";
-    }
+
     // 頁面載入時讀取名單
     document.addEventListener('DOMContentLoaded', loadEvaluators);
   </script>
