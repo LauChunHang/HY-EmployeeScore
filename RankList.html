@@ -62,12 +62,9 @@ body {
         返回列表
       </button>
 
-      <img src="HongYipLogo.png" class="w-14 h-14 object-contain">
+      <img src="HongYipLogo.png" class="w-14 h-14 object-contain" >
       <h1 class="text-lg font-bold text-indigo-700">員工評分系統</h1>
     </div>
-
-   
-
 
    <div class="flex gap-3 items-center flex-shrink-0">
       <button onclick="Ranklist()" 
@@ -84,16 +81,15 @@ body {
 </header>
 
 <!-- 主內容 -->
- 
 <main class="container mx-auto py-8 px-4 max-w-3xl">
 
-     <div class="flex items-center max-w-[300px] overflow-hidden">
-  <span class="text-gray-700 text-sm whitespace-nowrap mr-1">當前評核人：</span>
-  <span
-    id="currentEvaluatorDisplay"
-    class="font-bold text-indigo-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-  </span>
-</div>
+  <div class="flex items-center max-w-[300px] overflow-hidden mb-4">
+    <span class="text-gray-700 text-sm whitespace-nowrap mr-1">當前評核人：</span>
+    <span
+      id="currentEvaluatorDisplay"
+      class="font-bold text-indigo-600 text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+    </span>
+  </div>
 
   <h2 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">🏆 員工評分排行榜</h2>
 
@@ -110,34 +106,22 @@ function showEmployeeList() {
 
 // 登出
 function logout() {
-    // 彈出確認對話框
     const confirmed = confirm("您確定要登出嗎？\n登出後將返回登入頁面。");
-
     if (confirmed) {
-        // 用戶點擊「確定」
-        showCustomMessage('已登出', 'info');
         localStorage.removeItem("currentEvaluator");
-        
-        setTimeout(() => {
-            window.location.href = "login.html";
-        }, 500);
+        window.location.href = "login.html";
     }
-    // 如果用戶點擊「取消」，什麼都不做，直接返回
 }
 
-// 已在此頁，不需跳轉
 function Ranklist() {
-    // 可留空或滾動到頂部
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// 關鍵：點擊員工直接跳到評分詳細頁（使用 hash）
-// 改成使用 hash 跳轉
 function goToEmployee(empId) {
     window.location.href = `index.html#detail-${empId}`;
 }
 
-// 讀取員工姓名對照表
+// 讀取員工姓名與英文名對照表
 async function loadEmployeeMap() {
     try {
         const res = await fetch(`${scriptURL}?action=getEmployeeList`);
@@ -145,7 +129,10 @@ async function loadEmployeeMap() {
         if (!json.success) return {};
         const map = {};
         json.data.forEach(emp => {
-            map[emp.員工編號] = emp.員工姓名;
+            map[emp.員工編號] = {
+                name: emp.員工姓名,
+                englishName: emp.英文名 || "" // 讀取英文名欄位
+            };
         });
         return map;
     } catch (err) {
@@ -158,7 +145,6 @@ async function loadEmployeeMap() {
 document.addEventListener("DOMContentLoaded", async () => {
     const evaluator = localStorage.getItem("currentEvaluator");
     if (!evaluator) {
-        console.error("未登入，跳轉登入頁");
         window.location.href = "login.html";
         return;
     }
@@ -190,9 +176,11 @@ async function loadRankList(evaluator) {
 
         const ranked = list.map(item => {
             const id = item.員工編號;
+            const empInfo = window.employeeMap[id] || { name: "(未有姓名)", englishName: "" };
             return {
                 員工編號: id,
-                員工姓名: window.employeeMap[id] || "(未有姓名)",
+                員工姓名: empInfo.name,
+                英文名: empInfo.englishName,
                 tourTotal: item.tourTotal || 0,
                 interviewTotal: item.interviewTotal || 0,
                 total: (item.tourTotal || 0) + (item.interviewTotal || 0)
@@ -209,7 +197,7 @@ async function loadRankList(evaluator) {
     }
 }
 
-// 渲染排行榜（點擊跳轉到詳細評分）
+// 渲染排行榜
 function renderRankList(data) {
     const container = document.getElementById("rankList");
     if (data.length === 0) {
@@ -217,19 +205,27 @@ function renderRankList(data) {
         return;
     }
 
-    container.innerHTML = data.map((emp, index) => `
-        <div class="rank-item" onclick="goToEmployee('${emp.員工編號}')">
-            <div class="rank-no">#${index + 1}</div>
-            <div class="flex-1">
-                <div class="font-semibold text-lg">${emp.員工姓名}</div>
-                <div class="text-sm text-gray-500">員工編號：${emp.員工編號}</div>
+    container.innerHTML = data.map((emp, index) => {
+        // 組合姓名顯示：如果英文名存在則顯示「中文名 (英文名)」
+        const displayName = emp.英文名 
+            ? `${emp.員工姓名} <span class="text-gray-500 font-normal text-base ml-1">(${emp.英文名})</span>`
+            : emp.員工姓名;
+
+        return `
+            <div class="rank-item" onclick="goToEmployee('${emp.員工編號}')">
+                <div class="rank-no">#${index + 1}</div>
+                <div class="flex-1 ml-4 text-left">
+                    <div class="font-semibold text-lg flex items-baseline">
+                        ${displayName}
+                    </div>
+                    <div class="text-sm text-gray-500">員工編號：${emp.員工編號}</div>
+                </div>
+                <div class="emp-score">
+                    <div class="text-2xl">${emp.total.toFixed(1)} 分</div>
+                </div>
             </div>
-            <div class="emp-score">
-                <div class="text-2xl">${emp.total} 分</div>
-                
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 </script>
 
