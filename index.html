@@ -101,7 +101,10 @@
             let ratingOptions = [];
             let interviewRatingOptions = [];
             let currentEmployee = null;
-            let employeeScores = {}; // 儲存評核人對所有員工的最新評分
+            let employeeScores = {};
+            let isDirty = false;
+let initialScores = {}; // 儲存載入後的初始值
+let currentScores = {}; // 儲存評核人對所有員工的最新評分
             // --- 自定義訊息和載入狀態函數 ---
             function showCustomMessage(message, type = 'info') {
                 const msgBox = document.getElementById('customMessageBox');
@@ -522,6 +525,9 @@
                     interviewTotalSum,
                     combinedTotalSum
                 );
+                setTimeout(() => {
+            initRatingTracker(interviewRatingOptions, 'interview');
+        }, 800);
 
             } catch (error) {
                 console.error("載入歷史失敗:", error);
@@ -536,8 +542,9 @@
                     </div>
                 `;
             }
+            
         }
-        // 新增：將滑桿設定為最新評分
+        // 將滑桿設定為最新評分
         function setSlidersToLatest(latestRecord, options, prefix) {
             options.forEach((option, index) => {
                 const slider = document.getElementById(`${prefix}-rating-${index}`);
@@ -562,11 +569,67 @@
                 }
             });
         }
-        // 新增：鎖定所有滑桿
-        
-            // Helper function to render the combined history view
-        
-            // UPDATED: 接收並顯示累積總和 (單獨區塊總和)
+
+       function initRatingTracker(options, prefix) {
+    isDirty = false;
+    initialScores = {};
+    currentScores = {};
+
+    options.forEach((option, index) => {
+        const slider = document.getElementById(`${prefix}-rating-${index}`);
+        if (slider) {
+            const val = slider.value;
+            initialScores[option.評分項目] = val;
+            currentScores[option.評分項目] = val;
+
+            // 監聽滑桿即時變動
+            slider.removeEventListener('input', handleSliderChange); // 防止重複綁定
+            slider.addEventListener('input', handleSliderChange);
+            
+            // 存儲 metadata 方便 handleSliderChange 讀取
+            slider.dataset.itemName = option.評分項目;
+        }
+    });
+
+    // 監聽評語框
+    const commentBox = document.getElementById(`${prefix}-comment`);
+    if (commentBox) {
+        initialScores['評語'] = commentBox.value;
+        currentScores['評語'] = commentBox.value;
+        commentBox.addEventListener('input', (e) => {
+            currentScores['評語'] = e.target.value;
+            checkDirtyState();
+        });
+    }
+    console.log("追蹤器已初始化成功，初始值：", initialScores);
+}
+
+function handleSliderChange(e) {
+    const itemName = e.target.dataset.itemName;
+    currentScores[itemName] = e.target.value;
+    checkDirtyState();
+}
+
+function checkDirtyState() {
+    isDirty = Object.keys(initialScores).some(key => 
+        String(initialScores[key]) !== String(currentScores[key])
+    );
+}
+
+// 新增：鎖定所有滑桿
+function lockAllSliders() {
+    Object.keys(currentScores).forEach(key => {
+        const slider = document.querySelector(`input[data-item-name="${key}"]`);
+        if (slider) {
+            slider.disabled = true;
+            slider.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
+
+// Helper function to render the combined history view
+
+// UPDATED: 接收並顯示累積總和 (單獨區塊總和)
             function renderHistorySection(records, title, color, sectionTotalSum) {
                 if (records.length === 0) {
                     return `
@@ -934,14 +997,47 @@ function toggleDescription(prefix, index) {
                 }, 3500);
             }
         }
+
+        function resetDirtyState() {
+    isDirty = false;
+}
             // 返回員工列表
-            function showEmployeeList() {
-                document.getElementById('employeeDetail').style.display = 'none';
-                document.getElementById('employeeList').style.display = 'block';
-                currentEmployee = null;
-                // **更新按鈕狀態為禁用**
-                updateReturnButtonState(true);
-            }
+function showEmployeeList() {
+    console.log("當前是否被修改 (isDirty):", isDirty);
+    
+    if (isDirty) {
+        // 找出所有被修改過的項目
+        const changes = Object.keys(initialScores)
+            .filter(key => String(initialScores[key]) !== String(currentScores[key]))
+            .map(key => {
+                const oldVal = initialScores[key];
+                const newVal = currentScores[key];
+                return `• ${key}: ${oldVal} → ${newVal}`;
+            })
+            .join('\n');
+
+        const confirmMessage = `⚠️ 您有尚未儲存的修改：\n\n${changes}\n\n確定要放棄修改並返回嗎？`;
+        
+        if (!confirm(confirmMessage)) {
+            return; // 使用者點選取消，停留在頁面
+        }
+    }
+
+    // 執行返回邏輯
+    const detailView = document.getElementById('employeeDetail');
+    const listView = document.getElementById('employeeList');
+    
+    if (detailView) detailView.style.display = 'none';
+    if (listView) listView.style.display = 'block';
+    
+    currentEmployee = null;
+    isDirty = false; // 返回後重置
+    
+    if (typeof updateReturnButtonState === 'function') {
+        updateReturnButtonState(true);
+    }
+}
+
             // logout (UPDATED - Removed alert())
             function logout() {
             // 彈出確認對話框
