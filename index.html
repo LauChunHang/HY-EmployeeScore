@@ -663,11 +663,15 @@ function lockAllSliders() {
                             let detailHtml = Object.keys(record).map(key => {
                                 // 排除核心欄位，只顯示評分項目
                                 if (!['員工編號', '員工姓名', '評核人', '總分', '評分日期'].includes(key) && 
-                                    record[key] !== undefined && record[key] !== '' && record[key] != null) {
-                                    return `<p class="ml-4 text-sm text-gray-700"><span class="font-medium">${key}:</span> <strong>${record[key]}</strong> 分</p>`;
-                                }
-                                return '';
-                            }).filter(html => html !== '').join('');
+                        record[key] !== undefined && record[key] !== '' && record[key] != null) {
+                        
+                        // 判斷是否為「評語」相關欄位，如果是，就不加「分」字
+                        const suffix = (key === '評語' || key === '評語 (會面)') ? '' : ' 分';
+                        
+                        return `<p class="ml-4 text-sm text-gray-700"><span class="font-medium">${key}:</span> <strong>${record[key]}</strong>${suffix}</p>`;
+                    }
+                    return '';
+                }).filter(html => html !== '').join('');
 
                             return `
                                 <div class="history-record mb-4 p-4 border rounded-lg transition-shadow ${isLatest ? 'border-green-500 bg-green-50 shadow-md' : 'border-gray-200 bg-white'}">
@@ -730,9 +734,9 @@ function lockAllSliders() {
                 if (!Array.isArray(records)) {
                     return 0;
                 }
-                // records 陣列中的每個物件都有一個 '總分' 欄位
+                
                 return records.reduce((sum, record) => {
-                    // 嘗試將 '總分' 解析為浮點數，如果不是有效數字則視為 0
+                    
                     const score = parseFloat(record['總分']);
                     return sum + (isNaN(score) ? 0 : score);
                 }, 0);
