@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>員工評分系統 - 考察團與會面評分</title>
+    <title>員工評分系統 - 會面評分</title>
     
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,10 +60,8 @@
         EDUCATION: '學歷／專業資格',
         EXPERIENCE: '工作經驗',
         EMPLOYMENT: '康業受僱記錄',
-        RATING: '考察團評分選項',
         INTERVIEW_RATING: '會面評分選項',
         EVALUATORS: '評核人名單',
-        TOUR_SCORE: '考察團整體評分',
         INTERVIEW_SCORE: '會面評分'
     };
     
@@ -73,7 +71,6 @@
     let educationData = [];
     let experienceData = [];
     let employmentData = [];
-    let ratingOptions = [];
     let interviewRatingOptions = [];
     let currentEmployee = null;
     let employeeScores = {};
@@ -147,12 +144,11 @@
     
     async function loadAllData() {
         document.getElementById('employeeGrid').innerHTML = '<div class="text-center p-10 text-gray-500">載入中...</div>';
-        const [basic, education, experience, employment, ratings, interviewRatings, evaluators, allRatings] = await Promise.all([
+        const [basic, education, experience, employment, interviewRatings, evaluators, allRatings] = await Promise.all([
             loadSheetData(SHEETS.BASIC),
             loadSheetData(SHEETS.EDUCATION),
             loadSheetData(SHEETS.EXPERIENCE),
             loadSheetData(SHEETS.EMPLOYMENT),
-            loadSheetData(SHEETS.RATING),
             loadSheetData(SHEETS.INTERVIEW_RATING),
             loadSheetData(SHEETS.EVALUATORS),
             loadAllEvaluatorRatings(currentEvaluator)
@@ -163,12 +159,6 @@
         employmentData = employment;
         evaluatorList = evaluators.map(e => e.評核人姓名 || e.評核人);
         
-        ratingOptions = ratings.map(row => ({
-            '評分項目': row['評分項目'] || '未命名',
-            '最低分': parseInt(row['最低分']) || 0,
-            '最高分': parseInt(row['最高分']) || 5,
-            '說明': row['說明'] || ratingDescriptions[row['評分項目']] || ''
-        }));
         interviewRatingOptions = interviewRatings.map(row => ({
             '評分項目': row['評分項目'] || '未命名',
             '最低分': parseInt(row['最低分']) || 0,
@@ -190,18 +180,15 @@
         if (!employees.length) { grid.innerHTML = '<div class="error">無員工資料</div>'; return; }
         grid.innerHTML = employees.map(emp => {
             const scores = employeeScores[emp.員工編號] || {};
-            const tourTotal = scores.tourTotal !== undefined ? scores.tourTotal : null;
             const interviewTotal = scores.interviewTotal !== undefined ? scores.interviewTotal : null;
-            const tourDisplay = tourTotal !== null ? `<span class="text-green-600 font-bold">${tourTotal} 分</span>` : '<span class="text-red-500">未評分</span>';
             const interviewDisplay = interviewTotal !== null ? `<span class="text-blue-600 font-bold">${interviewTotal} 分</span>` : '<span class="text-red-500">未評分</span>';
             return `
                 <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
                     <h3>${emp.員工姓名 || '無姓名'} </h3>
                     <div class="text-sm text-gray-600"><strong>部門：</strong>${emp.部門 || '—'}</div>
                     <div class="text-sm text-gray-600 mb-2"><strong>職位：</strong>${emp.職位 || '—'}</div>
-                    <div class="mt-3 pt-2 border-t space-y-1 text-sm">
-                        <div class="flex justify-between"><span>🏆 考察團：</span>${tourDisplay}</div>
-                        <div class="flex justify-between"><span>💬 會面：</span>${interviewDisplay}</div>
+                    <div class="mt-3 pt-2 border-t flex justify-between text-sm">
+                        <span>💬 會面評分：</span>${interviewDisplay}
                     </div>
                 </div>
             `;
@@ -292,19 +279,6 @@
     function initDirtyTrackers() {
         initialScores = {};
         currentScores = {};
-        // 考察團滑桿
-        ratingOptions.forEach((opt, idx) => {
-            const slider = document.getElementById(`tour-rating-${idx}`);
-            if (slider) {
-                const key = `tour_${opt.評分項目}`;
-                initialScores[key] = slider.value;
-                currentScores[key] = slider.value;
-                slider.addEventListener('input', function() {
-                    currentScores[`tour_${opt.評分項目}`] = this.value;
-                    checkDirtyState();
-                });
-            }
-        });
         // 會面滑桿
         interviewRatingOptions.forEach((opt, idx) => {
             const slider = document.getElementById(`interview-rating-${idx}`);
@@ -318,16 +292,6 @@
                 });
             }
         });
-        // 考察團評語
-        const tourComment = document.getElementById('tour-comment');
-        if (tourComment) {
-            initialScores['tour_comment'] = tourComment.value;
-            currentScores['tour_comment'] = tourComment.value;
-            tourComment.addEventListener('input', (e) => {
-                currentScores['tour_comment'] = e.target.value;
-                checkDirtyState();
-            });
-        }
         // 會面評語
         const interviewComment = document.getElementById('interview-comment');
         if (interviewComment) {
@@ -365,25 +329,18 @@
                 container.innerHTML = '<div class="text-center p-5 bg-gray-100 rounded-lg">無歷史評分記錄。</div>';
                 return;
             }
-            const { tour = [], interview = [] } = result.data;
-            const latestTour = tour[0] || {};
+            const { interview = [] } = result.data;
             const latestInterview = interview[0] || {};
             
-            setSlidersToLatest(latestTour, ratingOptions, 'tour');
             setSlidersToLatest(latestInterview, interviewRatingOptions, 'interview');
-            updateTotalScore(ratingOptions, 'tour');
             updateTotalScore(interviewRatingOptions, 'interview');
             
             // 填入評語
-            const tourComment = document.getElementById('tour-comment');
-            if (tourComment && latestTour['評語']) tourComment.value = latestTour['評語'];
             const interviewComment = document.getElementById('interview-comment');
             if (interviewComment && latestInterview['評語']) interviewComment.value = latestInterview['評語'];
             
-            const tourSum = calculateRecordsTotalSum(tour);
             const interviewSum = calculateRecordsTotalSum(interview);
-            const combinedSum = tourSum + interviewSum;
-            container.innerHTML = renderCombinedHistory({ tour, interview }, tourSum, interviewSum, combinedSum);
+            container.innerHTML = renderHistorySection(interview, '💬 會面評分紀錄', '#004d99', interviewSum);
             
             initDirtyTrackers();
         } catch (err) {
@@ -425,31 +382,22 @@
         }
         const sorted = [...records].sort((a,b) => new Date(b.評分日期) - new Date(a.評分日期));
         return `
+            <div class="p-5 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-md text-center">
+                <div class="text-2xl font-black text-indigo-800">🏆 總積分 (會面)</div>
+                <div class="text-5xl font-extrabold text-red-600 my-2">${sectionTotalSum.toFixed(1)}</div>
+            </div>
             <div class="mb-6 p-4 border-l-4 rounded-lg" style="border-left-color:${color}">
                 <h4 class="text-xl font-bold mb-3" style="color:${color}">${title}</h4>
-                
                 ${sorted.map((rec, idx) => {
                     const isLatest = idx === 0;
                     let detail = Object.keys(rec).filter(k => !['員工編號','員工姓名','評核人','總分','評分日期'].includes(k) && rec[k] && rec[k] !== '').map(k => `<p class="ml-4 text-sm"><span class="font-medium">${k}:</span> ${rec[k]}${k.includes('評語') ? '' : ' 分'}</p>`).join('');
                     return `<div class="mb-3 p-3 rounded-lg border ${isLatest ? 'bg-green-50 border-green-400' : 'bg-white'}">
-                                <div class="flex justify-between"><strong>總分: <span class="text-green-600 text-2xl">${rec['總分']}</span></strong> <span class="text-xs">${rec['評分日期']?.slice(0,10) || ''}</span></div>
+                                <div class="flex justify-between"><strong>總分: ${rec['總分']}</strong> <span class="text-xs">${rec['評分日期']?.slice(0,10) || ''}</span></div>
                                 ${detail && `<div class="mt-2 text-sm">${detail}</div>`}
                                 ${isLatest ? '<p class="text-red-500 text-xs mt-2">⚠️ 再次提交將覆蓋此筆最新評分</p>' : ''}
                             </div>`;
                 }).join('')}
             </div>`;
-    }
-    
-    function renderCombinedHistory(allHistory, tourSum, interviewSum, combined) {
-        return `
-            <div class="p-5 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-md text-center">
-                <div class="text-2xl font-black text-indigo-800">🏆 總積分 (考察團+會面)</div>
-                <div class="text-5xl font-extrabold text-red-600 my-2">${combined.toFixed(1)}</div>
-                <div class="text-sm text-gray-600">考察團累積 ${tourSum.toFixed(1)}  +  會面累積 ${interviewSum.toFixed(1)}</div>
-            </div>
-            ${renderHistorySection(allHistory.tour, '📸 考察團評分紀錄', '#2c7da0', tourSum)}
-            ${renderHistorySection(allHistory.interview, '💬 會面評分紀錄', '#2c7da0', interviewSum)}
-        `;
     }
     
     // ======================== 提交評分 (含評語) ========================
@@ -498,23 +446,19 @@
         return evalData['總分'];
     }
     
-    async function submitAllEvaluations() {
+    async function submitEvaluation() {
         if (!currentEvaluator || !currentEmployee) {
             showCustomMessage('請先登入並選擇員工', 'error');
             return;
         }
-        const btn = document.getElementById('submitAllButton');
+        const btn = document.getElementById('submitButton');
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = '提交中...';
         try {
-            const tourData = prepareEvaluationData(ratingOptions, 'tour', 'tour-comment');
             const interviewData = prepareEvaluationData(interviewRatingOptions, 'interview', 'interview-comment');
-            await Promise.all([
-                submitSingleEvaluation(SHEETS.TOUR_SCORE, tourData),
-                submitSingleEvaluation(SHEETS.INTERVIEW_SCORE, interviewData)
-            ]);
-            showCustomMessage(`✅ 所有評分（考察團、會面）已成功提交！`, 'success');
+            await submitSingleEvaluation(SHEETS.INTERVIEW_SCORE, interviewData);
+            showCustomMessage(`✅ 會面評分 (${interviewData['總分']} 分) 已成功提交！`, 'success');
             setTimeout(() => {
                 loadHistoryRatings(currentEmployee.員工編號, currentEvaluator);
                 loadAllData();
@@ -527,7 +471,7 @@
         }
     }
     
-    // ======================== 顯示員工詳細 (含兩個評分區塊) ========================
+    // ======================== 顯示員工詳細 ========================
     function showEmployeeDetail(employeeId) {
         currentEmployee = allEmployees.find(emp => emp.員工編號 === employeeId);
         if (!currentEmployee) return;
@@ -610,16 +554,6 @@
             <!-- 歷史評分紀錄 -->
             <div class="detail-section mt-8"><h3>📜 歷史評分紀錄 (${currentEvaluator})</h3><div id="historyRatingsContainer">載入中...</div></div>
             
-            <!-- 考察團評分表單 -->
-            <div class="evaluation-form">
-                <h3>📸 考察團整體評分</h3>
-                <div class="evaluator-display">評核人：${currentEvaluator}</div>
-                <div id="tourRatingItemsContainer">${generateRatingItems(ratingOptions, 'tour')}</div>
-                <div class="score-breakdown" id="tourScoreBreakdown">${generateScoreBreakdown(ratingOptions, 'tour')}</div>
-                <div class="total-score" id="tourTotalScore"></div>
-                <div class="mt-5"><label class="block font-medium">評語 (考察團)</label><textarea id="tour-comment" class="w-full p-2 border rounded-lg resize-y" rows="2" placeholder="請輸入考察團評語 (選填)"></textarea></div>
-            </div>
-            
             <!-- 會面評分表單 -->
             <div class="interview-form">
                 <h3>💬 會面評分</h3>
@@ -631,13 +565,11 @@
             </div>
             
             <div class="text-center mt-6">
-                <button class="submit-button" id="submitAllButton" onclick="submitAllEvaluations()">📌 提交評分 (考察團 + 會面)</button>
+                <button class="submit-button" id="submitButton" onclick="submitEvaluation()">📌 提交評分 (會面)</button>
             </div>
         `;
         
-        setupRatingSliders(ratingOptions, 'tour');
         setupRatingSliders(interviewRatingOptions, 'interview');
-        updateTotalScore(ratingOptions, 'tour');
         updateTotalScore(interviewRatingOptions, 'interview');
         initDirtyTrackers();
     }
