@@ -196,7 +196,7 @@
             const interviewDisplay = interviewTotal !== null ? `<span class="text-blue-600 font-bold">${interviewTotal} 分</span>` : '<span class="text-red-500">未評分</span>';
             return `
                 <div class="employee-card" onclick="showEmployeeDetail('${emp.員工編號}')">
-                    <h3>${emp.員工姓名 || '無姓名'} (${emp.員工編號 || ''})</h3>
+                    <h3>${emp.員工姓名 || '無姓名'} </h3>
                     <div class="text-sm text-gray-600"><strong>部門：</strong>${emp.部門 || '—'}</div>
                     <div class="text-sm text-gray-600 mb-2"><strong>職位：</strong>${emp.職位 || '—'}</div>
                     <div class="mt-3 pt-2 border-t space-y-1 text-sm">
